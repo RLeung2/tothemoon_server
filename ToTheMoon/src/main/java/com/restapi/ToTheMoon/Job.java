@@ -33,15 +33,15 @@ public class Job {
 		this.boxAndWhisker = new BoxAndWhisker();
 	}
 
+//	TODO
 	public Job constrain(Map<Constraints, Float> filtersMap) {
 		return null;
-		
 	}
 	
 	public void generateBoxAndWhiskerData() {
 		BoxAndWhisker boxAndWhisker = this.getBoxAndWhisker();
 	    
-	    for (Districting districting : districtings) {
+	    for (Districting districting : this.districtings) {
 	    	districting.sortDistrictsByMinority(this.currMinorityPopulation);
 	    }
 	    
@@ -78,11 +78,13 @@ public class Job {
 	public List<Float> getMinorityPercentagesListAtDistrictIndex(int index) {
 		List<Float> minorityPercentagesList = new ArrayList<Float>();
 		
-		for (Districting districting : districtings) {
+		for (Districting districting : this.districtings) {
 			District district = districting.getDistricts().get(index);
 			Map<MinorityPopulation, Float> minorityPercentagesMap = district.getMinorityPopulationPercentages();
+			
 			minorityPercentagesList.add(minorityPercentagesMap.get(this.currMinorityPopulation));
 		}
+		
 		return minorityPercentagesList;
 	}
 	
@@ -92,14 +94,17 @@ public class Job {
 	    return elements.get(index-1);
 	}
 	
+//	TODO
 	public void instantiateObjectiveScores(Map<Measures, Float> measuresMap, Map<Constraints, Float> constraintsMap) {
 		
 	}
 	
+//	TODO
 	public void generateDistrictingAnalysisSummary(DistrictingAnalysisSummary districtingAnalysisSummary) {
 		
 	}
 	
+//	TODO
 	public void renumberDistrictings() {
 		
 	}
@@ -157,7 +162,6 @@ public class Job {
 		ArrayList<Districting> districtingList = new ArrayList<Districting>();
 		Object obj = new JSONParser().parse(new FileReader("C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d1000_c1000_r25_p10.json"));
 		JSONObject jsonObject = (JSONObject) obj;
-		
 		JSONArray plansArray = (JSONArray) jsonObject.get("plans");
 
 	    for (int i = 0 ; i < plansArray.size(); i++) {
@@ -168,7 +172,6 @@ public class Job {
 	    	
 	    	for (int j = 0; j < districtsArray.size(); j++) {
 	    		JSONObject districtObject = (JSONObject) districtsArray.get(j);
-	    		//Long districtNumber = (Long) districtObject.get("districtNumber");
 	    		Double hVAP = (Double) districtObject.get("HCVAP");
 	    		Double wVAP = (Double) districtObject.get("WCVAP");
 	    		Double bVAP = (Double) districtObject.get("BCVAP");
@@ -181,7 +184,7 @@ public class Job {
 	    		float bVAPPercentage = bVAP.floatValue() / totalVAP.floatValue();
 	    		float asianVAPPercentage = asianVAP.floatValue() / totalVAP.floatValue();
 	    		
-	    		HashMap<MinorityPopulation, Float> minorityPercentagesMap = new HashMap<MinorityPopulation, Float>(); 
+	    		HashMap<MinorityPopulation, Float> minorityPercentagesMap = new HashMap<MinorityPopulation, Float>();
 	    		minorityPercentagesMap.put(MinorityPopulation.HISPANIC, hVAPPercentage);
 	    		minorityPercentagesMap.put(MinorityPopulation.AFRICAN_AMERICAN, bVAPPercentage);
 	    		minorityPercentagesMap.put(MinorityPopulation.ASIAN, asianVAPPercentage);
@@ -198,7 +201,8 @@ public class Job {
 	}
 	
 	public String generateDistrictingGeometry(int index) throws JsonParseException, JsonMappingException, IOException {
-		Districting selectedDistricting = (Districting) ((ArrayList) this.districtings).get(index);
+		List<Districting> districtings = (ArrayList<Districting>) this.districtings;
+		Districting selectedDistricting = (Districting) (districtings).get(index);
 		String geometryFileName = "C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_simple.json";
 		
 		return selectedDistricting.generateDistrictingGeoJSON(geometryFileName, selectedDistricting);

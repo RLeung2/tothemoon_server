@@ -143,22 +143,22 @@ public class Districting {
 	}
 	
 	public String generateDistrictingGeoJSON(String fileName, Districting selectedDistricting) throws JsonGenerationException, JsonMappingException, IOException {
+		// Documentation requires properties to be of these types to serialize properly into GeoJSON
 		List<Feature> features = new ArrayList<Feature>();
 		Map<String, Object> properties = new HashMap<String, Object>();
 		GeoJSONWriter writer = new GeoJSONWriter();
+		ObjectMapper mapper = new ObjectMapper();
 		
-		List<Geometry> precinctGeoemtry = generateJTSPrecinctGeometry(fileName);
-		
-		List<Geometry> districtingsGeodata = constructDistricting(selectedDistricting, precinctGeoemtry);
+		List<Geometry> precinctGeometry = generateJTSPrecinctGeometry(fileName);
+		List<Geometry> districtingsGeodata = constructDistricting(selectedDistricting, precinctGeometry);
 		
 		for (int i = 0; i < districtingsGeodata.size(); i++) {
 			GeoJSON json = writer.write(districtingsGeodata.get(i));
+			// This path to Geometry is used since the JTS library uses a class of the same name
 			features.add(new Feature((org.wololo.geojson.Geometry) json, properties));
 		}
 		
-		ObjectMapper mapper = new ObjectMapper();		
 		GeoJSON finalJSON = writer.write(features);
-		mapper.writeValue(new File("C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\testDistricting.json"), finalJSON);
 		return mapper.writeValueAsString(finalJSON);
 	}
 	
@@ -167,14 +167,10 @@ public class Districting {
 		// Configured this way to ignore the CRS field of the GeoJSON which the FeatureColection class does not have (nor do we need it)
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-		FeatureCollection featureCollection = objectMapper.readValue(
-				new File(fileName), 
-				FeatureCollection.class);
-  
-		// parse Geometry from Feature
+		FeatureCollection featureCollection = objectMapper.readValue(new File(fileName), FeatureCollection.class);
 		GeoJSONReader reader = new GeoJSONReader();
 		Feature[] features = featureCollection.getFeatures();
-		List<Geometry> precinctGeometry = new ArrayList<>();
+		List<Geometry> precinctGeometry = new ArrayList<Geometry>();
 		
 		for (int i = 0; i < features.length; i++) {
 			Geometry geometry = reader.read(features[i].getGeometry());
@@ -193,7 +189,6 @@ public class Districting {
 		}
 		return districtingsGeodata;
 	}
-
 
 	public Geometry generateDistrictGeodata(District district, List<Geometry> precinctGeometry) {
 		List<Integer> precinctsInDistrict = district.getPrecinctIDs();

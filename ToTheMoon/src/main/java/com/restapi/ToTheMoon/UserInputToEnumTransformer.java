@@ -22,7 +22,7 @@ public class UserInputToEnumTransformer {
 		}
 	}
 	
-	public static MinorityPopulation userMinorityPopToEnum(String minorityPop) {
+	public static MinorityPopulation transformUserMinorityPopToEnum(String minorityPop) {
 		if (minorityPop.equals("african_american")) {
 			return MinorityPopulation.AFRICAN_AMERICAN;
 		} else if (minorityPop.equals("hispanic")) {

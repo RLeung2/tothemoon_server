@@ -34,8 +34,7 @@ import javax.servlet.http.HttpSession;
  */
 @Path("/tothemoon")
 public class MainController {
-	
-	private TempEntityManager entityManager = new TempEntityManager();
+	private TempEntityManager em = new TempEntityManager();
 	private State currState;
 	private Job currJob;
 	
@@ -44,9 +43,10 @@ public class MainController {
     @Produces(MediaType.APPLICATION_JSON)
     public Response handleSelectState(@PathParam("state") String state, @Context HttpServletRequest req) {
 		HttpSession session = req.getSession(true);
-		USState stateEnum = UserInputToEnumTransformer.transformUserStateToEnum(state);
-		State currState = entityManager.getState(stateEnum);
 		ObjectMapper mapper = new ObjectMapper();
+		
+		USState stateEnum = UserInputToEnumTransformer.transformUserStateToEnum(state);
+		State currState = em.getState(stateEnum);
 		
 		this.currState = currState;
 		session.setAttribute("currState", this.currState);
@@ -63,12 +63,19 @@ public class MainController {
 	@GET
     @Path("/{state}/geojson")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response handleSendStateGeoJson(@PathParam("state") String state) throws ParseException, FileNotFoundException, IOException {
+    public Response handleSendStateGeoJson(@PathParam("state") String state) {
 		String stateGeoJsonFilePath = UserInputToEnumTransformer.transformUserStateToStateGeoJsonFilePath(state);
 		ObjectMapper objectMapper = new ObjectMapper();
-		Object object = new JSONParser().parse(new FileReader(stateGeoJsonFilePath));
-		JSONObject jsonObject = (JSONObject) object;
 		
+		Object object;
+		try {
+			object = new JSONParser().parse(new FileReader(stateGeoJsonFilePath));
+		} catch (Exception e1) {
+			e1.printStackTrace();
+			return Response.serverError().build();
+		}
+		
+		JSONObject jsonObject = (JSONObject) object;
 		try {
 			String stateGeoJSON = objectMapper.writeValueAsString(jsonObject);
 	        return Response.ok(stateGeoJSON).build();
@@ -78,6 +85,7 @@ public class MainController {
 		}
     }
 	
+	//TODO
 	@GET
     @Path("/job/{jobID}")
     @Produces(MediaType.TEXT_PLAIN)
@@ -95,20 +103,24 @@ public class MainController {
     @Path("/constrainJob/{minority}")
 	@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response handleConstrainDistrictings(String input,
-    		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException {
-		
+    public Response handleConstrainDistrictings(@PathParam("minority") String input, @Context HttpServletRequest req) {
 		HttpSession session = req.getSession();
+		MinorityPopulation minority = UserInputToEnumTransformer.transformUserMinorityPopToEnum(input);
 		
-		MinorityPopulation minority = UserInputToEnumTransformer.userMinorityPopToEnum(input);
         Job testJob = new Job();
         testJob.setCurrMinorityPopulation(minority);
-        testJob.fillDistrictings();
+        try {
+			testJob.fillDistrictings();
+		} catch (Exception e1) {
+			e1.printStackTrace();
+			return Response.serverError().build();
+		}
         testJob.generateBoxAndWhiskerData();
         
         this.currJob = testJob;
         session.setAttribute("currJob", this.currJob);
 		
+        // TODO - random number now; change once constrain() is implemented
 		int numberDistrictingsLeft = 900 + (int)(Math.random() * 150);
 		ObjectMapper mapper = new ObjectMapper();
 		try {
@@ -120,6 +132,7 @@ public class MainController {
 		}
     }
 	
+	// TODO - not implemented yet
 	@GET
     @Path("/measures")
 	//@Consumes(MediaType.APPLICATION_JSON)
@@ -139,16 +152,12 @@ public class MainController {
 	@GET
     @Path("/districting/{districtingIndex}/boxAndWhisker")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response handleGetBoxAndWhisker(@PathParam("districtingIndex") String input,
-    		@Context HttpServletRequest req) {
-		
+    public Response handleGetBoxAndWhisker(@PathParam("districtingIndex") String input, @Context HttpServletRequest req) {
 		HttpSession session = req.getSession();
 		Job job = (Job) session.getAttribute("currJob");
-		
 		BoxAndWhisker boxAndWhisker = job.getBoxAndWhisker();
-		//BoxAndWhisker boxAndWhisker = this.currJob.getBoxAndWhisker();
-		
 		ObjectMapper mapper = new ObjectMapper();
+		
 		try {
 			String boxAndWhiskerJSON = mapper.writeValueAsString(boxAndWhisker);
 	        return Response.ok(boxAndWhiskerJSON).build();
@@ -160,10 +169,8 @@ public class MainController {
 	
 	@GET
     @Path("/districting/{districtingIndex}/display")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response handleDisplayDistricting(@PathParam("districtingIndex") String index, @Context HttpServletRequest req) {
-		
-        String greeting = "District to display: " + index;
         HttpSession session = req.getSession();
 		Job job = (Job) session.getAttribute("currJob");
 		
@@ -171,7 +178,6 @@ public class MainController {
 			String responseJSON = job.generateDistrictingGeometry(Integer.parseInt(index));
 	        return Response.ok(responseJSON).build();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			return Response.serverError().build();
 		}
 	}

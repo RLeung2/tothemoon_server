@@ -12,7 +12,7 @@ public class CORSFilter implements ContainerResponseFilter {
     public ContainerResponse filter(ContainerRequest request,
             ContainerResponse response) {
 
-        response.getHttpHeaders().add("Access-Control-Allow-Origin", "*");
+        response.getHttpHeaders().add("Access-Control-Allow-Origin", "http://localhost:3000");
         response.getHttpHeaders().add("Access-Control-Allow-Headers",
                 "CSRF-Token, X-Requested-By, Authorization, Content-Type");
         response.getHttpHeaders().add("Access-Control-Allow-Credentials", "true");
