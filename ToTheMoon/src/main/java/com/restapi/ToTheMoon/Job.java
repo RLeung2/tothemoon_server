@@ -9,7 +9,7 @@ public class Job {
 	private float populationEquality;
 	private MinorityPopulation currMinorityPopulation;
 	private DistrictingAnalysisSummary districtingAnalysisSummary;
-	private int id;
+	private String id;
 	private BoxAndWhisker boxAndWhisker;
 	
 	public Job() {
@@ -65,11 +65,11 @@ public class Job {
 		return districtingAnalysisSummary;
 	}
 
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 

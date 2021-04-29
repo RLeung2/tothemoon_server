@@ -25,24 +25,21 @@ import javax.servlet.http.HttpSession;
 @Path("/tothemoon")
 public class MainController {
 	
-	private TempEntityManager em = new TempEntityManager();
+	private TempEntityManager entityManager = new TempEntityManager();
 	private State currState;
 	
 	@GET
     @Path("/{state}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response handleSelectState(@PathParam("state") String state, 
-    		@Context HttpServletRequest req) {
-		
+    public Response handleSelectState(@PathParam("state") String state, @Context HttpServletRequest req) {
 		HttpSession session = req.getSession(true);
+		USState stateEnum = UserInputToEnumTransformer.transformUserStateToEnum(state);
+		State currState = entityManager.getState(stateEnum);
+		ObjectMapper mapper = new ObjectMapper();
 		
-		USState stateEnum = UserInputToEnumTransformer.userStateToEnum(state);
-		State currState = em.getState(stateEnum);
 		this.currState = currState;
-		
 		session.setAttribute("currState", this.currState);
 		
-		ObjectMapper mapper = new ObjectMapper();
 		try {
 			String stateJSON = mapper.writeValueAsString(currState);
 	        return Response.ok(stateJSON).build();
