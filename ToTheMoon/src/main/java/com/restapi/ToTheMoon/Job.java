@@ -17,6 +17,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
 public class Job {
 	
 	private Collection<Districting> districtings;
@@ -149,9 +152,10 @@ public class Job {
 		this.boxAndWhisker = boxAndWhisker;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void fillDistrictings() throws FileNotFoundException, IOException, ParseException {
 		ArrayList<Districting> districtingList = new ArrayList<Districting>();
-		Object obj = new JSONParser().parse(new FileReader("C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d950_c1000_r25_p15.json"));
+		Object obj = new JSONParser().parse(new FileReader("C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d1000_c1000_r25_p10.json"));
 		JSONObject jsonObject = (JSONObject) obj;
 		
 		JSONArray plansArray = (JSONArray) jsonObject.get("plans");
@@ -170,6 +174,8 @@ public class Job {
 	    		Double bVAP = (Double) districtObject.get("BCVAP");
 	    		Double asianVAP = (Double) districtObject.get("ASIANCVAP");
 	    		
+	    		List<Integer> precinctIDs = (List<Integer>) districtObject.get("precincts");
+	    		
 	    		Double totalVAP = hVAP + wVAP + bVAP + asianVAP;
 	    		float hVAPPercentage = hVAP.floatValue() / totalVAP.floatValue();
 	    		float bVAPPercentage = bVAP.floatValue() / totalVAP.floatValue();
@@ -182,11 +188,19 @@ public class Job {
 	    		
 	    		District district = new District();
 	    		district.setMinorityPopulationPercentages(minorityPercentagesMap);
+	    		district.setPrecinctIDs(precinctIDs);
 	    		districtList.add(district);
 	    	}
 	    	newDistricting.setDistricts(districtList);
 	    	districtingList.add(newDistricting);
 	    }
 	    this.setDistrictings(districtingList);
+	}
+	
+	public String generateDistrictingGeometry(int index) throws JsonParseException, JsonMappingException, IOException {
+		Districting selectedDistricting = (Districting) ((ArrayList) this.districtings).get(index);
+		String geometryFileName = "C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_simple.json";
+		
+		return selectedDistricting.generateDistrictingGeoJSON(geometryFileName, selectedDistricting);
 	}
 }

@@ -1,12 +1,30 @@
 package com.restapi.ToTheMoon;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.operation.union.UnaryUnionOp;
+import org.wololo.geojson.Feature;
+import org.wololo.geojson.FeatureCollection;
+import org.wololo.geojson.GeoJSON;
+import org.wololo.jts2geojson.GeoJSONReader;
+import org.wololo.jts2geojson.GeoJSONWriter;
+
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Districting {
 
@@ -122,6 +140,71 @@ public class Districting {
 		        return d1Percentage.compareTo(d2Percentage);
 		    }
 		};
+	}
+	
+	public String generateDistrictingGeoJSON(String fileName, Districting selectedDistricting) throws JsonGenerationException, JsonMappingException, IOException {
+		List<Feature> features = new ArrayList<Feature>();
+		Map<String, Object> properties = new HashMap<String, Object>();
+		GeoJSONWriter writer = new GeoJSONWriter();
+		
+		List<Geometry> precinctGeoemtry = generateJTSPrecinctGeometry(fileName);
+		
+		List<Geometry> districtingsGeodata = constructDistricting(selectedDistricting, precinctGeoemtry);
+		
+		for (int i = 0; i < districtingsGeodata.size(); i++) {
+			GeoJSON json = writer.write(districtingsGeodata.get(i));
+			features.add(new Feature((org.wololo.geojson.Geometry) json, properties));
+		}
+		
+		ObjectMapper mapper = new ObjectMapper();		
+		GeoJSON finalJSON = writer.write(features);
+		mapper.writeValue(new File("C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\testDistricting.json"), finalJSON);
+		return mapper.writeValueAsString(finalJSON);
+	}
+	
+	private List<Geometry> generateJTSPrecinctGeometry(String fileName) throws JsonParseException, JsonMappingException, IOException {
+		ObjectMapper objectMapper = new ObjectMapper();
+		// Configured this way to ignore the CRS field of the GeoJSON which the FeatureColection class does not have (nor do we need it)
+		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+		FeatureCollection featureCollection = objectMapper.readValue(
+				new File(fileName), 
+				FeatureCollection.class);
+  
+		// parse Geometry from Feature
+		GeoJSONReader reader = new GeoJSONReader();
+		Feature[] features = featureCollection.getFeatures();
+		List<Geometry> precinctGeometry = new ArrayList<>();
+		
+		for (int i = 0; i < features.length; i++) {
+			Geometry geometry = reader.read(features[i].getGeometry());
+			Geometry fixedGeometry = geometry.buffer(0);
+			precinctGeometry.add(fixedGeometry);
+		}
+		return precinctGeometry;
+	}
+	
+	public List<Geometry> constructDistricting(Districting districting, List<Geometry> precinctGeometry) {
+		List<District> districtsList = districting.getDistricts();
+		List<Geometry> districtingsGeodata = new ArrayList<Geometry>();
+		
+		for(int i = 0; i < districtsList.size(); i++) {
+			districtingsGeodata.add(generateDistrictGeodata(districtsList.get(i), precinctGeometry));
+		}
+		return districtingsGeodata;
+	}
+
+
+	public Geometry generateDistrictGeodata(District district, List<Geometry> precinctGeometry) {
+		List<Integer> precinctsInDistrict = district.getPrecinctIDs();
+		List<Geometry> precinctPolygons = new ArrayList<Geometry>();
+		
+		for (int i = 0; i < precinctsInDistrict.size(); i++) {
+			precinctPolygons.add(precinctGeometry.get(i));
+		}
+
+		Geometry combinedPrecincts = UnaryUnionOp.union(precinctPolygons);
+		return combinedPrecincts;
 	}
 	
 }

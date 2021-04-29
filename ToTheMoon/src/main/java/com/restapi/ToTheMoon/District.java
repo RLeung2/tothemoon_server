@@ -1,11 +1,13 @@
 package com.restapi.ToTheMoon;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class District {
 	
 	private Collection<Precinct> precincts;
+	private List<Integer> precinctIDs;
 	private int population;
 	private int votingPopulation;
 	private float percentBlue;
@@ -32,6 +34,14 @@ public class District {
 
 	public void setPrecincts(Collection<Precinct> precincts) {
 		this.precincts = precincts;
+	}
+	
+	public List<Integer> getPrecinctIDs() {
+		return precinctIDs;
+	}
+
+	public void setPrecinctIDs(List<Integer> precinctIDs) {
+		this.precinctIDs = precinctIDs;
 	}
 
 

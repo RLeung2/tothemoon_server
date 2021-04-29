@@ -22,6 +22,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import com.fasterxml.jackson.core.JsonParseException;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -52,6 +54,24 @@ public class MainController {
 		try {
 			String stateJSON = mapper.writeValueAsString(currState);
 	        return Response.ok(stateJSON).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+    }
+	
+	@GET
+    @Path("/{state}/geojson")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response handleSendStateGeoJson(@PathParam("state") String state) throws ParseException, FileNotFoundException, IOException {
+		String stateGeoJsonFilePath = UserInputToEnumTransformer.transformUserStateToStateGeoJsonFilePath(state);
+		ObjectMapper objectMapper = new ObjectMapper();
+		Object object = new JSONParser().parse(new FileReader(stateGeoJsonFilePath));
+		JSONObject jsonObject = (JSONObject) object;
+		
+		try {
+			String stateGeoJSON = objectMapper.writeValueAsString(jsonObject);
+	        return Response.ok(stateGeoJSON).build();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Response.serverError().build();
@@ -140,12 +160,20 @@ public class MainController {
 	
 	@GET
     @Path("/districting/{districtingIndex}/display")
-	@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public Response handleDisplayDistricting(String jsonInput, @Context HttpServletRequest req) {
+    public Response handleDisplayDistricting(@PathParam("districtingIndex") String index, @Context HttpServletRequest req) {
 		
-        String greeting = "District to display: " + jsonInput;
-        return Response.ok(greeting).build();
+        String greeting = "District to display: " + index;
+        HttpSession session = req.getSession();
+		Job job = (Job) session.getAttribute("currJob");
+		
+		try {
+			String responseJSON = job.generateDistrictingGeometry(Integer.parseInt(index));
+	        return Response.ok(responseJSON).build();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			return Response.serverError().build();
+		}
 	}
 	
 }
