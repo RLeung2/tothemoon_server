@@ -11,4 +11,14 @@ public class UserInputToEnumTransformer {
 			return USState.WA;
 		}
 	}
+	
+	public static MinorityPopulation userMinorityPopToEnum(String minorityPop) {
+		if (minorityPop.equals("african_american")) {
+			return MinorityPopulation.AFRICAN_AMERICAN;
+		} else if (minorityPop.equals("hispanic")) {
+			return MinorityPopulation.HISPANIC;
+		} else {
+			return MinorityPopulation.ASIAN;
+		}
+	}
 }

@@ -1,5 +1,6 @@
 package com.restapi.ToTheMoon;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class BoxAndWhisker {
@@ -13,8 +14,25 @@ public class BoxAndWhisker {
 	private Map<Integer, Float> enactedDots;
 	private Map<Integer, Float> selectedDistrictingDots;
 	
+	public BoxAndWhisker() {
+		this.averagePopDistrict = new HashMap<Integer, Float>();
+		this.minPopDistrict = new HashMap<Integer, Float>();
+		this.maxPopDistrict = new HashMap<Integer, Float>();
+		this.twentyFifthPercentile = new HashMap<Integer, Float>();
+		this.seventyFifthPercentile = new HashMap<Integer, Float>();
+		this.enactedDots = new HashMap<Integer, Float>();
+		this.selectedDistrictingDots = new HashMap<Integer, Float>();
+	}
+	
 	public BoxAndWhisker(MinorityPopulation minorityPopulation) {
 		this.minorityPopulation = minorityPopulation;
+		this.averagePopDistrict = new HashMap<Integer, Float>();
+		this.minPopDistrict = new HashMap<Integer, Float>();
+		this.maxPopDistrict = new HashMap<Integer, Float>();
+		this.twentyFifthPercentile = new HashMap<Integer, Float>();
+		this.seventyFifthPercentile = new HashMap<Integer, Float>();
+		this.enactedDots = new HashMap<Integer, Float>();
+		this.selectedDistrictingDots = new HashMap<Integer, Float>();
 	}
 
 	public MinorityPopulation getMinorityPopulation() {

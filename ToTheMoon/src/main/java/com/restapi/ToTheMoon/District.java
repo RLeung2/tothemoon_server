@@ -16,6 +16,9 @@ public class District {
 	private int label;
 	private String geoData;
 	
+	public District() {
+		
+	}
 	
 	public District(Collection<Precinct> precincts) {
 		this.precincts = precincts;

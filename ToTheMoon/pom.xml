@@ -23,12 +23,14 @@
                 <groupId>org.glassfish</groupId>
                 <artifactId>maven-embedded-glassfish-plugin</artifactId>
                 <version>${glassfish.version}</version>
+                <!-- 
                 <configuration>
                     <goalPrefix>embedded-glassfish</goalPrefix>
                     <app>C:/Users/Ahmed/eclipse-workspace/target/${project.build.finalName}.war</app>
                     <autoDelete>true</autoDelete>
                     <port>8080</port>
                 </configuration>
+                 -->
                 <dependencies>
                     <dependency>
                         <groupId>com.sun.jersey</groupId>
@@ -78,10 +80,36 @@
             <artifactId>javax.servlet-api</artifactId>
             <version>3.0.1</version>
         </dependency>
+        <dependency>
+		    <groupId>com.fasterxml.jackson.core</groupId>
+		    <artifactId>jackson-databind</artifactId>
+		    <version>2.9.0.pr2</version>
+		</dependency>
+		<dependency>
+		 <groupId>de.grundid.opendatalab</groupId>
+		 <artifactId>geojson-jackson</artifactId>
+		 <version>1.14</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.googlecode.json-simple</groupId>
+		    <artifactId>json-simple</artifactId>
+		    <version>1.1.1</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.locationtech.jts</groupId>
+		    <artifactId>jts-core</artifactId>
+		    <version>${jts.version}</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.wololo</groupId>
+		    <artifactId>jts2geojson</artifactId>
+		    <version>0.14.1</version>
+		</dependency>
     </dependencies>
     <properties>
         <jersey.version>1.17</jersey.version>
         <glassfish.version>3.1.1</glassfish.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+   		<jts.version>1.16.1</jts.version>
     </properties>
 </project>

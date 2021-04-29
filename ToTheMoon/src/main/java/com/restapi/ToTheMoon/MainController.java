@@ -5,7 +5,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.core.*;
@@ -13,6 +17,10 @@ import javax.ws.rs.core.*;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +35,7 @@ public class MainController {
 	
 	private TempEntityManager entityManager = new TempEntityManager();
 	private State currState;
+	private Job currJob;
 	
 	@GET
     @Path("/{state}")
@@ -52,17 +61,33 @@ public class MainController {
 	@GET
     @Path("/job/{jobID}")
     @Produces(MediaType.TEXT_PLAIN)
-    public Response handleJob(@PathParam("jobID") String jobID) {
-
+    public Response handleJob(@PathParam("jobID") String jobID, @Context HttpServletRequest req) {
+		HttpSession session = req.getSession(true);
+		this.currState = new State(null, null, null);
+		this.currState.setCurrState(USState.NV);
+		session.setAttribute("job", this.currState);
+		
         String greeting = "Job selected: " + jobID;
         return Response.ok(greeting).build();
     }
 	
 	@GET
-    @Path("/constrainJob")
+    @Path("/constrainJob/{minority}")
 	@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response handleConstrainDistrictings(String jsonInput) {
+    public Response handleConstrainDistrictings(String input,
+    		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException {
+		
+		HttpSession session = req.getSession();
+		
+		MinorityPopulation minority = UserInputToEnumTransformer.userMinorityPopToEnum(input);
+        Job testJob = new Job();
+        testJob.setCurrMinorityPopulation(minority);
+        testJob.fillDistrictings();
+        testJob.generateBoxAndWhiskerData();
+        
+        this.currJob = testJob;
+        session.setAttribute("currJob", this.currJob);
 		
 		int numberDistrictingsLeft = 900 + (int)(Math.random() * 150);
 		ObjectMapper mapper = new ObjectMapper();
@@ -77,31 +102,50 @@ public class MainController {
 	
 	@GET
     @Path("/measures")
-	@Consumes(MediaType.APPLICATION_JSON)
+	//@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public Response handleSetMeasures(String jsonInput) {
+    public Response handleSetMeasures(String jsonInput, @Context HttpServletRequest req) throws JsonGenerationException, JsonMappingException, IOException {
+		HttpSession session = req.getSession(true);
+		State sesh = (State) session.getAttribute("job");
+		
+		
+		ObjectMapper mapper = new ObjectMapper();
+		String stateInfo = mapper.writeValueAsString(sesh);
 		
         String greeting = "Measures selected: " + jsonInput;
-        return Response.ok(greeting).build();
+        return Response.ok(stateInfo).build();
 	}
 	
 	@GET
     @Path("/districting/{districtingIndex}/boxAndWhisker")
-	@Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response handleGetBoxAndWhisker(String jsonInput) {
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response handleGetBoxAndWhisker(@PathParam("districtingIndex") String input,
+    		@Context HttpServletRequest req) {
 		
-        String greeting = "Box and Whisker for district #: " + jsonInput;
-        return Response.ok(greeting).build();
+		HttpSession session = req.getSession();
+		Job job = (Job) session.getAttribute("currJob");
+		
+		BoxAndWhisker boxAndWhisker = job.getBoxAndWhisker();
+		//BoxAndWhisker boxAndWhisker = this.currJob.getBoxAndWhisker();
+		
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			String boxAndWhiskerJSON = mapper.writeValueAsString(boxAndWhisker);
+	        return Response.ok(boxAndWhiskerJSON).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
 	}
 	
 	@GET
     @Path("/districting/{districtingIndex}/display")
 	@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public Response handleDisplayDistricting(String jsonInput) {
+    public Response handleDisplayDistricting(String jsonInput, @Context HttpServletRequest req) {
 		
         String greeting = "District to display: " + jsonInput;
         return Response.ok(greeting).build();
 	}
+	
 }
