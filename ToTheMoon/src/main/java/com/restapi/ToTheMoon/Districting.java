@@ -191,11 +191,12 @@ public class Districting {
 	}
 
 	public Geometry generateDistrictGeodata(District district, List<Geometry> precinctGeometry) {
-		List<Integer> precinctsInDistrict = district.getPrecinctIDs();
+		List<Long> precinctsInDistrict = district.getPrecinctIDs();
 		List<Geometry> precinctPolygons = new ArrayList<Geometry>();
 		
 		for (int i = 0; i < precinctsInDistrict.size(); i++) {
-			precinctPolygons.add(precinctGeometry.get(i));
+			int precinctIndex = Integer.parseInt(precinctsInDistrict.get(i).toString()) - 1;
+			precinctPolygons.add(precinctGeometry.get(precinctIndex));
 		}
 
 		Geometry combinedPrecincts = UnaryUnionOp.union(precinctPolygons);

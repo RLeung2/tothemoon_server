@@ -178,6 +178,7 @@ public class MainController {
 			String responseJSON = job.generateDistrictingGeometry(Integer.parseInt(index));
 	        return Response.ok(responseJSON).build();
 		} catch (Exception e) {
+			e.printStackTrace();
 			return Response.serverError().build();
 		}
 	}

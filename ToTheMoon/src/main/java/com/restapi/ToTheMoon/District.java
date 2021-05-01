@@ -7,7 +7,7 @@ import java.util.Map;
 public class District {
 	
 	private Collection<Precinct> precincts;
-	private List<Integer> precinctIDs;
+	private List<Long> precinctIDs;
 	private int population;
 	private int votingPopulation;
 	private float percentBlue;
@@ -36,11 +36,11 @@ public class District {
 		this.precincts = precincts;
 	}
 	
-	public List<Integer> getPrecinctIDs() {
+	public List<Long> getPrecinctIDs() {
 		return precinctIDs;
 	}
 
-	public void setPrecinctIDs(List<Integer> precinctIDs) {
+	public void setPrecinctIDs(List<Long> precinctIDs) {
 		this.precinctIDs = precinctIDs;
 	}
 

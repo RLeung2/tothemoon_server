@@ -177,7 +177,7 @@ public class Job {
 	    		Double bVAP = (Double) districtObject.get("BCVAP");
 	    		Double asianVAP = (Double) districtObject.get("ASIANCVAP");
 	    		
-	    		List<Integer> precinctIDs = (List<Integer>) districtObject.get("precincts");
+	    		List<Long> precinctIDs = (List<Long>) districtObject.get("precincts");
 	    		
 	    		Double totalVAP = hVAP + wVAP + bVAP + asianVAP;
 	    		float hVAPPercentage = hVAP.floatValue() / totalVAP.floatValue();
