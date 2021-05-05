@@ -138,15 +138,15 @@ public class MainController {
 	//@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public Response handleSetMeasures(String jsonInput, @Context HttpServletRequest req) throws JsonGenerationException, JsonMappingException, IOException {
-		HttpSession session = req.getSession(true);
-		State sesh = (State) session.getAttribute("job");
+//		HttpSession session = req.getSession(true);
+//		State sesh = (State) session.getAttribute("job");
+		em.createJob();
 		
+//		ObjectMapper mapper = new ObjectMapper();
+//		String stateInfo = mapper.writeValueAsString(sesh);
 		
-		ObjectMapper mapper = new ObjectMapper();
-		String stateInfo = mapper.writeValueAsString(sesh);
-		
-        String greeting = "Measures selected: " + jsonInput;
-        return Response.ok(stateInfo).build();
+        String greeting = "Measures selected: ";
+        return Response.ok(greeting).build();
 	}
 	
 	@GET

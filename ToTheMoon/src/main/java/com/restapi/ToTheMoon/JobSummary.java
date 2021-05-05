@@ -8,6 +8,7 @@ public class JobSummary {
 	private int rounds;
 	private int coolingPeriod;
 	private String jobId;
+	private int recom;
 	
 	public JobSummary(USState state, int numDistrictings, float populationEquality, int rounds, int coolingPeriod,
 			String jobId) {
@@ -70,6 +71,14 @@ public class JobSummary {
 
 	public void setJobId(String jobId) {
 		this.jobId = jobId;
+	}
+	
+	public int getRecom() {
+		return recom;
+	}
+
+	public void setRecom(int newRecom) {
+		this.recom = newRecom;
 	}
 	
 }

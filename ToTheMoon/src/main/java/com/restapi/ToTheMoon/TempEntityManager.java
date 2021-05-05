@@ -5,10 +5,20 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+
+import Database.DatabaseJob;
+
+
 public class TempEntityManager {
 	
+	private final EntityManagerFactory factory;
+	
 	public TempEntityManager() {
-		
+		this.factory = Persistence.createEntityManagerFactory("ToTheMoon");
+//		this.factory = new PersistenceProvider().createEntityManagerFactory("ToTheMoon");
 	}
 	
 	public List<JobSummary> getNevadaJobSummaries(USState state) {
@@ -55,5 +65,22 @@ public class TempEntityManager {
 	
 	public Job getJob() {
 		return new Job();
+	}
+	
+	public void createJob() {
+		EntityManager em = this.factory.createEntityManager();
+		DatabaseJob testJob = new DatabaseJob();
+		
+        em.getTransaction().begin();
+		testJob.setStateId(0);
+		testJob.setRounds(10000);
+		testJob.setNumDistrictings(500);
+		
+		em.persist(testJob);
+		em.getTransaction().commit();
+
+        em.close();
+		
+		
 	}
 }
