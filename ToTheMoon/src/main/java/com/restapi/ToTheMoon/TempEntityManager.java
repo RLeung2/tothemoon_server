@@ -14,10 +14,12 @@ import Database.DatabaseJob;
 
 public class TempEntityManager {
 	
-	private final EntityManagerFactory factory;
+	private final String PERSISTENCE_UNIT_NAME = "ToTheMoon";
+	private EntityManagerFactory factory;
+	
 	
 	public TempEntityManager() {
-		this.factory = Persistence.createEntityManagerFactory("ToTheMoon");
+		this.factory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
 //		this.factory = new PersistenceProvider().createEntityManagerFactory("ToTheMoon");
 	}
 	
@@ -69,9 +71,9 @@ public class TempEntityManager {
 	
 	public void createJob() {
 		EntityManager em = this.factory.createEntityManager();
-		DatabaseJob testJob = new DatabaseJob();
-		
         em.getTransaction().begin();
+        
+        DatabaseJob testJob = new DatabaseJob();
 		testJob.setStateId(0);
 		testJob.setRounds(10000);
 		testJob.setNumDistrictings(500);
@@ -80,7 +82,5 @@ public class TempEntityManager {
 		em.getTransaction().commit();
 
         em.close();
-		
-		
 	}
 }

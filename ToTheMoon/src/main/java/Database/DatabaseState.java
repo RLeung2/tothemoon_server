@@ -1,5 +1,4 @@
 package Database;
-//package de.vogella.jpa.simple.model;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
