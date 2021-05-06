@@ -17,10 +17,14 @@ import javax.ws.rs.core.*;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import javafx.util.Pair;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -32,6 +36,8 @@ import javax.servlet.http.HttpSession;
  */
 @Path("/tothemoon")
 public class MainController {
+	private static final String NEVADA_ENACTED_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_districts_with_data.json";
+	private static final String NEVADA_GEO_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_geometry.json";
 	
 	private TempEntityManager entityManager = new TempEntityManager();
 	private State currState;
@@ -40,7 +46,8 @@ public class MainController {
 	@GET
     @Path("/{state}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response handleSelectState(@PathParam("state") String state, @Context HttpServletRequest req) {
+    public Response handleSelectState(@PathParam("state") String state, 
+    		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException {
 		HttpSession session = req.getSession(true);
 		USState stateEnum = UserInputToEnumTransformer.transformUserStateToEnum(state);
 		State currState = entityManager.getState(stateEnum);
@@ -75,14 +82,18 @@ public class MainController {
     @Path("/constrainJob/{minority}")
 	@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response handleConstrainDistrictings(String input,
+    public Response handleConstrainDistrictings(@PathParam("minority") String input,
     		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException {
 		
 		HttpSession session = req.getSession();
 		
 		MinorityPopulation minority = UserInputToEnumTransformer.userMinorityPopToEnum(input);
+		State currState = (State) session.getAttribute("currState");
+		Districting enactedDistricting = currState.getEnactedDistricting();
         Job testJob = new Job();
         testJob.setCurrMinorityPopulation(minority);
+        testJob.setEnactedDistricting(enactedDistricting);
+        testJob.generatePrecinctPopulationMap(NEVADA_GEO_FILE);
         testJob.fillDistrictings();
         testJob.generateBoxAndWhiskerData();
         
@@ -146,6 +157,50 @@ public class MainController {
 		
         String greeting = "District to display: " + jsonInput;
         return Response.ok(greeting).build();
+	}
+	
+	@GET
+    @Path("/districting/{districtingIndex}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response handleGetDistricting(@PathParam("districtingIndex") String index, 
+    		@Context HttpServletRequest req) {
+		
+		HttpSession session = req.getSession();
+		Job job = (Job) session.getAttribute("currJob");
+		Districting districting = job.getDistrictingAtIndex(Integer.parseInt(index));
+		
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			String districtingJSON = mapper.writeValueAsString(districting);
+	        return Response.ok(districtingJSON).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+	}
+	
+	@GET
+    @Path("/gillConstruct/{districtingIndex}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response handleGillConstruct(@PathParam("districtingIndex") String index, 
+    		@Context HttpServletRequest req) {
+		
+		HttpSession session = req.getSession();
+		Job job = (Job) session.getAttribute("currJob");
+		State currState = (State) session.getAttribute("currState");
+		Districting enactedDistricting = currState.getEnactedDistricting();
+		Districting districting = job.getDistrictingAtIndex(Integer.parseInt(index));
+		
+		districting.gillConstructRenumbering(enactedDistricting);		
+		
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			String districtingJSON = mapper.writeValueAsString(districting);
+	        return Response.ok(districtingJSON).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
 	}
 	
 }

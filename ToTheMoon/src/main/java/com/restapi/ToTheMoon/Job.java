@@ -19,12 +19,14 @@ import org.json.simple.parser.ParseException;
 
 public class Job {
 	
-	private Collection<Districting> districtings;
+	private List<Districting> districtings;
 	private float populationEquality;
 	private MinorityPopulation currMinorityPopulation;
 	private DistrictingAnalysisSummary districtingAnalysisSummary;
 	private String id;
 	private BoxAndWhisker boxAndWhisker;
+	private Map<Integer, Integer> precinctPopulationMap;
+	private Districting enactedDistricting;
 	
 	public Job() {
 		this.boxAndWhisker = new BoxAndWhisker();
@@ -38,12 +40,12 @@ public class Job {
 	public void generateBoxAndWhiskerData() {
 		BoxAndWhisker boxAndWhisker = this.getBoxAndWhisker();
 	    
-	    for (Districting districting : districtings) {
+	    for (Districting districting : this.districtings) {
 	    	districting.sortDistrictsByMinority(this.currMinorityPopulation);
 	    }
 	    
-	    Districting randomDistricting = this.districtings.iterator().next();
-	    int numDistricts = randomDistricting.getDistricts().size();
+	    List<District> enactedDistrictsList = this.enactedDistricting.getDistricts();
+	    int numDistricts = enactedDistrictsList.size();
 	    for (int i = 0; i < numDistricts; i++) {
 	    	List<Float> minorityPercentagesList = getMinorityPercentagesListAtDistrictIndex(i);
 	    	Collections.sort(minorityPercentagesList);
@@ -67,12 +69,18 @@ public class Job {
 	    	Map<Integer, Float> seventyFifthPercentileMap = boxAndWhisker.getSeventyFifthPercentile();
 	    	seventyFifthPercentileMap.put(i, percentile(minorityPercentagesList, 75));
 	    	boxAndWhisker.setSeventyFifthPercentile(seventyFifthPercentileMap);
+	    	
+	    	Map<Integer, Float> enactedPercentagesMap = boxAndWhisker.getEnactedDots();
+	    	District enactedDistrict = enactedDistrictsList.get(i);
+	    	float enactedPercentage = enactedDistrict.getMinorityPopulationPercentageForMinority(this.currMinorityPopulation);
+	    	enactedPercentagesMap.put(i, enactedPercentage);
+	    	boxAndWhisker.setEnactedDots(enactedPercentagesMap);
 	    }
 		boxAndWhisker.setMinorityPopulation(this.currMinorityPopulation);
 		this.setBoxAndWhisker(boxAndWhisker);
 	}
 	
-	public List<Float> getMinorityPercentagesListAtDistrictIndex(int index) {
+	private List<Float> getMinorityPercentagesListAtDistrictIndex(int index) {
 		List<Float> minorityPercentagesList = new ArrayList<Float>();
 		
 		for (Districting districting : districtings) {
@@ -83,7 +91,7 @@ public class Job {
 		return minorityPercentagesList;
 	}
 	
-	public static float percentile(List<Float> elements, double percentile) {
+	private static float percentile(List<Float> elements, double percentile) {
 	    Collections.sort(elements);
 	    int index = (int) Math.ceil(percentile / 100.0 * elements.size());
 	    return elements.get(index-1);
@@ -98,14 +106,16 @@ public class Job {
 	}
 	
 	public void renumberDistrictings() {
-		
+		for (Districting districting : this.districtings) {
+	    	districting.gillConstructRenumbering(this.enactedDistricting);
+	    }
 	}
 
 	public Collection<Districting> getDistrictings() {
 		return districtings;
 	}
 
-	public void setDistrictings(Collection<Districting> districtings) {
+	public void setDistrictings(List<Districting> districtings) {
 		this.districtings = districtings;
 	}
 
@@ -149,13 +159,49 @@ public class Job {
 		this.boxAndWhisker = boxAndWhisker;
 	}
 	
+	public Map<Integer, Integer> getPrecinctPopulationMap() {
+		return precinctPopulationMap;
+	}
+
+	public void setPrecinctPopulationMap(Map<Integer, Integer> precinctPopulationMap) {
+		this.precinctPopulationMap = precinctPopulationMap;
+	}
+
+	public Districting getEnactedDistricting() {
+		return enactedDistricting;
+	}
+
+	public void setEnactedDistricting(Districting enactedDistricting) {
+		this.enactedDistricting = enactedDistricting;
+	}
+
+	public Districting getDistrictingAtIndex(int index) {
+		return this.districtings.get(index);
+	}
+	
+	public void generatePrecinctPopulationMap(String geoFile) throws FileNotFoundException, IOException, ParseException {
+		Object geoObject = new JSONParser().parse(new FileReader(geoFile));
+		JSONObject geoJsonObject = (JSONObject) geoObject;
+		JSONArray allPrecinctsArray = (JSONArray) geoJsonObject.get("features");
+		Map<Integer, Integer> precinctPopulationMap = new HashMap<Integer, Integer>();
+		for (int i = 0 ; i < allPrecinctsArray.size(); i++) {
+	    	JSONObject precinctObject = (JSONObject) allPrecinctsArray.get(i);
+	    	JSONObject propertiesObject = (JSONObject) precinctObject.get("properties");
+	    	
+	    	int precinctId = Integer.parseInt((String)propertiesObject.get("id"));
+    		Double totalPopulation = (Double) propertiesObject.get("TOTPOP");
+    		precinctPopulationMap.put(precinctId, totalPopulation.intValue());
+		}
+		this.setPrecinctPopulationMap(precinctPopulationMap);
+	}
+	
 	public void fillDistrictings() throws FileNotFoundException, IOException, ParseException {
 		ArrayList<Districting> districtingList = new ArrayList<Districting>();
-		Object obj = new JSONParser().parse(new FileReader("C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d950_c1000_r25_p15.json"));
+		Object obj = new JSONParser().parse(new FileReader("D:\\Users\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d1000_c1000_r25_p10.json"));
 		JSONObject jsonObject = (JSONObject) obj;
 		
 		JSONArray plansArray = (JSONArray) jsonObject.get("plans");
-
+		
 	    for (int i = 0 ; i < plansArray.size(); i++) {
 	    	JSONObject planObject = (JSONObject) plansArray.get(i);
 	    	JSONArray districtsArray = (JSONArray) planObject.get("districts");
@@ -165,23 +211,34 @@ public class Job {
 	    	for (int j = 0; j < districtsArray.size(); j++) {
 	    		JSONObject districtObject = (JSONObject) districtsArray.get(j);
 	    		//Long districtNumber = (Long) districtObject.get("districtNumber");
-	    		Double hVAP = (Double) districtObject.get("HCVAP");
-	    		Double wVAP = (Double) districtObject.get("WCVAP");
-	    		Double bVAP = (Double) districtObject.get("BCVAP");
-	    		Double asianVAP = (Double) districtObject.get("ASIANCVAP");
+	    		Double hCVAP = (Double) districtObject.get("HCVAP");
+	    		Double wCVAP = (Double) districtObject.get("WCVAP");
+	    		Double bCVAP = (Double) districtObject.get("BCVAP");
+	    		Double asianCVAP = (Double) districtObject.get("ASIANCVAP");
 	    		
-	    		Double totalVAP = hVAP + wVAP + bVAP + asianVAP;
-	    		float hVAPPercentage = hVAP.floatValue() / totalVAP.floatValue();
-	    		float bVAPPercentage = bVAP.floatValue() / totalVAP.floatValue();
-	    		float asianVAPPercentage = asianVAP.floatValue() / totalVAP.floatValue();
+	    		Double totalVAP = hCVAP + wCVAP + bCVAP + asianCVAP;
+	    		float hVAPPercentage = hCVAP.floatValue() / totalVAP.floatValue();
+	    		float bVAPPercentage = bCVAP.floatValue() / totalVAP.floatValue();
+	    		float asianVAPPercentage = asianCVAP.floatValue() / totalVAP.floatValue();
 	    		
 	    		HashMap<MinorityPopulation, Float> minorityPercentagesMap = new HashMap<MinorityPopulation, Float>(); 
 	    		minorityPercentagesMap.put(MinorityPopulation.HISPANIC, hVAPPercentage);
 	    		minorityPercentagesMap.put(MinorityPopulation.AFRICAN_AMERICAN, bVAPPercentage);
 	    		minorityPercentagesMap.put(MinorityPopulation.ASIAN, asianVAPPercentage);
 	    		
+	    		JSONArray precinctsArray = (JSONArray) districtObject.get("precincts");
+	    		ArrayList<Precinct> precinctList = new ArrayList<Precinct>();
+	    		for (int k = 0; k < precinctsArray.size(); k++) {
+	    			Precinct newPrecinct = new Precinct(0, 0, 0, 0, 0, 0, 0, null, null, 0);
+	    			int precinctId = ((Long) precinctsArray.get(k)).intValue() - 1;
+	    			newPrecinct.setId(precinctId);
+	    			newPrecinct.setPopulation(this.precinctPopulationMap.get(precinctId));
+	    			precinctList.add(newPrecinct);
+	    		}
+	    		
 	    		District district = new District();
 	    		district.setMinorityPopulationPercentages(minorityPercentagesMap);
+	    		district.setPrecincts(precinctList);
 	    		districtList.add(district);
 	    	}
 	    	newDistricting.setDistricts(districtList);
