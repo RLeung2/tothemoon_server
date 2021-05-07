@@ -1,5 +1,7 @@
 package com.restapi.ToTheMoon;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -11,8 +13,11 @@ import javax.persistence.Persistence;
 
 import Database.DatabaseJob;
 
+import org.json.simple.parser.ParseException;
 
 public class TempEntityManager {
+	private static final String NEVADA_ENACTED_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_districts_with_data.json";
+	private static final String NEVADA_GEO_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_geometry.json";
 	
 	private final String PERSISTENCE_UNIT_NAME = "ToTheMoon";
 	private EntityManagerFactory factory;
@@ -25,8 +30,8 @@ public class TempEntityManager {
 	
 	public List<JobSummary> getNevadaJobSummaries(USState state) {
 		List<JobSummary> nevadaJobSummaries = new ArrayList<JobSummary>();
-		Path nevadaJobOnePath = Paths.get("C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d1000_c1000_r25_p10.json");
-		Path nevadaJobTwoPath = Paths.get("C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d950_c1000_r25_p15.json");
+		Path nevadaJobOnePath = Paths.get("D:\\Users\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d1000_c1000_r25_p10.json");
+		Path nevadaJobTwoPath = Paths.get("D:\\Users\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d950_c1000_r25_p15.json");
 		String nevadaJobOneFileName = nevadaJobOnePath.getFileName().toString();
 		String nevadaJobTwoFileName = nevadaJobTwoPath.getFileName().toString();
 		String[] nevadaJobOneStringParameters = nevadaJobOneFileName.split("_");
@@ -58,11 +63,16 @@ public class TempEntityManager {
 //		
 //	}
 	
-	public State getState(USState state) {
-		Districting enactedDistricting = new Districting(-1, null, null);
+	public State getState(USState state) throws FileNotFoundException, IOException, ParseException {
+		//Districting enactedDistricting = new Districting(-1, null, null);
 		List<JobSummary> stateJobSummaries = getNevadaJobSummaries(state);
+		State stateObject = new State();
+		stateObject.setCurrState(state);
+		stateObject.setJobSummaries(stateJobSummaries);
+		stateObject.generateEnactedDistricting(NEVADA_ENACTED_FILE, NEVADA_GEO_FILE);
 		
-		return new State(state, enactedDistricting, stateJobSummaries);
+		return stateObject;
+		//return new State(state, enactedDistricting, stateJobSummaries);
 	}
 	
 	public Job getJob() {

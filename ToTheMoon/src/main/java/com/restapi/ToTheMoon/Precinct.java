@@ -8,19 +8,27 @@ public class Precinct {
 	private float percentRed;
 	private int blackPopulation;
 	private int hispanicPopulation;
+	private int asianPopulation;
 	private Incumbent incumbent;
 	private String geoData;
+	private int id;
+	
+	public Precinct() {
+		
+	}
 	
 	public Precinct(int population, int votingPopulation, float percentBlue, float percentRed, int blackPopulation,
-			int hispanicPopulation, Incumbent incumbent, String geoData) {
+			int hispanicPopulation, int asianPopulation, Incumbent incumbent, String geoData, int id) {
 		this.population = population;
 		this.votingPopulation = votingPopulation;
 		this.percentBlue = percentBlue;
 		this.percentRed = percentRed;
 		this.blackPopulation = blackPopulation;
 		this.hispanicPopulation = hispanicPopulation;
+		this.asianPopulation = asianPopulation;
 		this.incumbent = incumbent;
 		this.geoData = geoData;
+		this.id = id;
 	}
 	public int getPopulation() {
 		return population;
@@ -58,6 +66,12 @@ public class Precinct {
 	public void setHispanicPopulation(int hispanicPopulation) {
 		this.hispanicPopulation = hispanicPopulation;
 	}
+	public int getAsianPopulation() {
+		return asianPopulation;
+	}
+	public void setAsianPopulation(int asianPopulation) {
+		this.asianPopulation = asianPopulation;
+	}
 	public Incumbent getIncumbent() {
 		return incumbent;
 	}
@@ -70,6 +84,11 @@ public class Precinct {
 	public void setGeoData(String geoData) {
 		this.geoData = geoData;
 	}
-	
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
 	
 }

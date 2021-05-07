@@ -19,7 +19,8 @@ public class District {
 	private String geoData;
 	
 	public District() {
-		
+		this.population = 0;
+		this.votingPopulation = 0;
 	}
 	
 	public District(Collection<Precinct> precincts) {
@@ -104,6 +105,9 @@ public class District {
 		this.minorityPopulationPercentages = minorityPopulationPercentages;
 	}
 
+	public float getMinorityPopulationPercentageForMinority(MinorityPopulation minority) {
+		return this.getMinorityPopulationPercentages().get(minority);
+	}
 
 	public ObjectiveFunction getObjectiveFunction() {
 		return ObjectiveFunction;
