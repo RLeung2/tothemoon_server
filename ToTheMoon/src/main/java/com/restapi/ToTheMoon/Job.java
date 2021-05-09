@@ -30,6 +30,7 @@ public class Job {
 	private BoxAndWhisker boxAndWhisker;
 	private Map<Integer, Integer> precinctPopulationMap;
 	private Districting enactedDistricting;
+	private Districting averageDistricting;
 	
 	public Job() {
 		this.boxAndWhisker = new BoxAndWhisker();
@@ -166,11 +167,6 @@ public class Job {
 	public void setBoxAndWhisker(BoxAndWhisker boxAndWhisker) {
 		this.boxAndWhisker = boxAndWhisker;
 	}
-	
-	@SuppressWarnings("unchecked")
-	public void fillDistrictings() throws FileNotFoundException, IOException, ParseException {
-		ArrayList<Districting> districtingList = new ArrayList<Districting>();
-		Object obj = new JSONParser().parse(new FileReader("C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d1000_c1000_r25_p10.json"));
 
 	public Map<Integer, Integer> getPrecinctPopulationMap() {
 		return precinctPopulationMap;
@@ -192,6 +188,14 @@ public class Job {
 		return this.districtings.get(index);
 	}
 	
+	public Districting getAverageDistricting() {
+		return averageDistricting;
+	}
+
+	public void setAverageDistricting(Districting averageDistricting) {
+		this.averageDistricting = averageDistricting;
+	}
+
 	public void generatePrecinctPopulationMap(String geoFile) throws FileNotFoundException, IOException, ParseException {
 		Object geoObject = new JSONParser().parse(new FileReader(geoFile));
 		JSONObject geoJsonObject = (JSONObject) geoObject;
@@ -222,18 +226,8 @@ public class Job {
 	    	
 	    	for (int j = 0; j < districtsArray.size(); j++) {
 	    		JSONObject districtObject = (JSONObject) districtsArray.get(j);
-
-	    		Double hVAP = (Double) districtObject.get("HCVAP");
-	    		Double wVAP = (Double) districtObject.get("WCVAP");
-	    		Double bVAP = (Double) districtObject.get("BCVAP");
-	    		Double asianVAP = (Double) districtObject.get("ASIANCVAP");
 	    		
 	    		List<Long> precinctIDs = (List<Long>) districtObject.get("precincts");
-	    		
-	    		Double totalVAP = hVAP + wVAP + bVAP + asianVAP;
-	    		float hVAPPercentage = hVAP.floatValue() / totalVAP.floatValue();
-	    		float bVAPPercentage = bVAP.floatValue() / totalVAP.floatValue();
-	    		float asianVAPPercentage = asianVAP.floatValue() / totalVAP.floatValue();
 
 	    		//Long districtNumber = (Long) districtObject.get("districtNumber");
 	    		Double hCVAP = (Double) districtObject.get("HCVAP");
@@ -268,6 +262,7 @@ public class Job {
 	    		districtList.add(district);
 	    	}
 	    	newDistricting.setDistricts(districtList);
+	    	newDistricting.setId(i);
 	    	districtingList.add(newDistricting);
 	    }
 	    this.setDistrictings(districtingList);
@@ -279,5 +274,43 @@ public class Job {
 		String geometryFileName = "C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_simple.json";
 		
 		return selectedDistricting.generateDistrictingGeoJSON(geometryFileName, selectedDistricting);
+	}
+	
+	public void findAverageDistricting() {
+		float minimumTotalMinorityPercentageDifference = Float.MAX_VALUE;
+		int closestToAverageDistrictingId = 0;
+		
+		for (Districting districting: this.districtings) {
+			List<District> districtsList = districting.getDistricts();
+			float totalMinorityPercentageDifference = 0;
+			
+			for (int i = 0; i < districtsList.size(); i++) {
+				District currentDistrict = districtsList.get(i);
+				totalMinorityPercentageDifference += calculatePercentageDifferenceOfDitrictComparedToAverage(currentDistrict, i);
+			}
+			
+			if (totalMinorityPercentageDifference < minimumTotalMinorityPercentageDifference) {
+				closestToAverageDistrictingId = districting.getId();
+				minimumTotalMinorityPercentageDifference = totalMinorityPercentageDifference;
+			}
+		}
+		this.setAverageDistricting(getDistrictingById(closestToAverageDistrictingId));
+	}
+	
+	private float calculatePercentageDifferenceOfDitrictComparedToAverage(District district, int index) {
+		Map<Integer, Float> averagePopulationPercentagesMap = this.boxAndWhisker.getAveragePopDistrict();
+		Map<MinorityPopulation, Float> currentMinorityPopulationPercentagesMap = district.getMinorityPopulationPercentages();
+		float districtAveragePopulationPercentage = averagePopulationPercentagesMap.get(index);
+		float currentDistrictPopulationPercentage = currentMinorityPopulationPercentagesMap.get(this.currMinorityPopulation);
+		float currentMinorityPercentageDifference = Math.abs(districtAveragePopulationPercentage - currentDistrictPopulationPercentage);
+		return currentMinorityPercentageDifference;
+	}
+	
+	public Districting getDistrictingById(int Id) {
+		for (Districting districting: this.districtings) {
+			if (districting.getId() == Id)
+				return districting;
+		}
+		return null;
 	}
 }

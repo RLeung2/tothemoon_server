@@ -167,7 +167,7 @@ public class Districting {
 		for (Map.Entry<Pair<District, District>, Integer> mapEntry : intersectionMap.entrySet()) {
 			Pair<District, District> districtPair = mapEntry.getKey();
 			int intersectionPopulation = mapEntry.getValue();
-			double intersectionEdgeWeight = intersectionPopulation != 0 ? 1 / (double)intersectionPopulation : 0;
+			double intersectionEdgeWeight = intersectionPopulation != 0 ? 1 / (double)intersectionPopulation : 99999999.0;
 			DefaultWeightedEdge edge = bipartiteGraph.addEdge(districtPair.getKey(), districtPair.getValue());
 			bipartiteGraph.setEdgeWeight(edge, intersectionEdgeWeight);
 		}
@@ -225,6 +225,7 @@ public class Districting {
 		List<District> reorderedDistrictsList= new ArrayList<District>();
 		for (int i = 0; i < enactedDistrictsList.size(); i++) {
 			District currentDistrict = reorderedMapping.get(enactedDistrictsList.get(i));
+			currentDistrict.setLabel(i);
 			reorderedDistrictsList.add(currentDistrict);
 		}
 		this.setDistricts(reorderedDistrictsList);

@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.core.*;
@@ -115,17 +116,8 @@ public class MainController {
     		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException {
 		
 		HttpSession session = req.getSession();
+
 		MinorityPopulation minority = UserInputToEnumTransformer.transformUserMinorityPopToEnum(input);
-		
-        Job testJob = new Job();
-        testJob.setCurrMinorityPopulation(minority);
-        try {
-			testJob.fillDistrictings();
-		} catch (Exception e1) {
-			e1.printStackTrace();
-			return Response.serverError().build();
-		}
-		MinorityPopulation minority = UserInputToEnumTransformer.userMinorityPopToEnum(input);
 		State currState = (State) session.getAttribute("currState");
 		Districting enactedDistricting = currState.getEnactedDistricting();
         Job testJob = new Job();
@@ -133,6 +125,7 @@ public class MainController {
         testJob.setEnactedDistricting(enactedDistricting);
         testJob.generatePrecinctPopulationMap(NEVADA_GEO_FILE);
         testJob.fillDistrictings();
+        testJob.renumberDistrictings();
         testJob.generateBoxAndWhiskerData();
         
         this.currJob = testJob;
@@ -244,4 +237,33 @@ public class MainController {
 		}
 	}
 	
+	@GET
+    @Path("/megaTest")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response megaTest(@PathParam("districtingIndex") String index, 
+    		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException {
+		
+		State stateObject = new State();
+		stateObject.setCurrState(USState.NV);
+		stateObject.generateEnactedDistricting(NEVADA_ENACTED_FILE, NEVADA_GEO_FILE);
+		
+		Districting enactedDistricting = stateObject.getEnactedDistricting();
+        Job testJob = new Job();
+        testJob.setCurrMinorityPopulation(MinorityPopulation.ASIAN);
+        testJob.setEnactedDistricting(enactedDistricting);
+        testJob.generatePrecinctPopulationMap(NEVADA_GEO_FILE);
+        testJob.fillDistrictings();
+        testJob.renumberDistrictings();
+        testJob.generateBoxAndWhiskerData();
+        testJob.findAverageDistricting();	
+		
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			String testJSON = mapper.writeValueAsString(testJob);
+	        return Response.ok(testJSON).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+	}
 }

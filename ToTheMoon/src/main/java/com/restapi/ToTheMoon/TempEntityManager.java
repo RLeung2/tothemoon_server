@@ -24,7 +24,7 @@ public class TempEntityManager {
 	
 	
 	public TempEntityManager() {
-		this.factory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
+		//this.factory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
 //		this.factory = new PersistenceProvider().createEntityManagerFactory("ToTheMoon");
 	}
 	
