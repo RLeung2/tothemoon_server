@@ -2,11 +2,11 @@ package com.restapi.ToTheMoon;
 
 public class Constants {
 	
-	public final String NV_JOB_1000 = "C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d1000_c1000_r25_p10.json";
-	public final String NV_JOB_950 = "C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d950_c1000_r25_p15.json";
-	
-	public final String NV_DISTRICTS = "C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nvDistricts.json";
-	public final String NY_DISTRICTS = "C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nyDistricts.json";
-	public final String WA_DISTRICTS = "C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\waDistricts.json";
-	
+	public static final String YOUR_DIRECTORY_PREFIX = "C:\\Users\\Ahmed\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\";
+
+	public static final String NEVADA_JOB_1000_FILE_NAME = "nv_d1000_c1000_r25_p10.json";
+	public static final String NEVADA_JOB_950_FILE_NAME = "nv_d950_c1000_r25_p15.json";
+	public static final String NEVADA_ENACTED_FILE_NAME = "nv_districts_with_areas.json";
+	public static final String NEVADA_GEOMETRY_FILE_NAME = "nv_precincts_with_areas.json";
+
 }

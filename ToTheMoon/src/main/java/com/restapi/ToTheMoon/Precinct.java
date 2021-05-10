@@ -12,6 +12,7 @@ public class Precinct {
 	private Incumbent incumbent;
 	private String geoData;
 	private int id;
+	private float area;
 	
 	public Precinct() {
 		
@@ -89,6 +90,14 @@ public class Precinct {
 	}
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	public float getArea() {
+		return area;
+	}
+
+	public void setArea(float area) {
+		this.area = area;
 	}
 	
 }

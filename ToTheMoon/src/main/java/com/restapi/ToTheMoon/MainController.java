@@ -40,7 +40,7 @@ import javax.servlet.http.HttpSession;
 public class MainController {
 	private TempEntityManager em = new TempEntityManager();
 	private static final String NEVADA_ENACTED_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_districts_with_data.json";
-	private static final String NEVADA_GEO_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_geometry.json";
+	private static final String NEVADA_GEO_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME;
 	
 	private TempEntityManager entityManager = new TempEntityManager();
 	private State currState;
@@ -261,6 +261,40 @@ public class MainController {
 		try {
 			String testJSON = mapper.writeValueAsString(testJob);
 	        return Response.ok(testJSON).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+	}
+	
+	@GET
+    @Path("/deviationTest")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deviationTest(@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException {
+		
+		State stateObject = new State();
+		stateObject.setCurrState(USState.NV);
+		stateObject.generateEnactedDistricting(NEVADA_ENACTED_FILE, NEVADA_GEO_FILE);
+		
+		Districting enactedDistricting = stateObject.getEnactedDistricting();
+        Job testJob = new Job();
+        testJob.setCurrMinorityPopulation(MinorityPopulation.ASIAN);
+        testJob.setEnactedDistricting(enactedDistricting);
+        testJob.generatePrecinctPopulationMap(NEVADA_GEO_FILE);
+        testJob.fillDistrictings();
+        testJob.renumberDistrictings();
+        testJob.generateBoxAndWhiskerData();
+        testJob.findAverageDistricting();	
+        
+        System.out.println("**************************************************************");
+		
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			testJob.getDistrictingAtIndex(0).calculateEnactedAreaScore(enactedDistricting);
+			testJob.getDistrictingAtIndex(0).calculateEnactedPopScore(enactedDistricting);
+			ObjectiveFunction objFunc = testJob.getDistrictingAtIndex(0).getObjectivefunction();
+			String testJSON = mapper.writeValueAsString(new ObjectiveFunction(0, 0, 0, 0, 0, 0, null));
+	        return Response.ok("yo").build();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Response.serverError().build();

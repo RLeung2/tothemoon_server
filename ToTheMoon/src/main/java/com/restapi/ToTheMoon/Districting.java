@@ -103,12 +103,28 @@ public class Districting {
 		return (float) 0.0;
 	}
 	
-	public float calculateEnactedAreaScore() {
-		return (float) 0.0;
+	public void calculateEnactedAreaScore(Districting enacted) {
+		List<District> enactedDistricts = enacted.getDistricts();
+		for (int i = 0; i < enactedDistricts.size(); i++) {
+			float enactedCurrDistrictArea = enactedDistricts.get(i).getArea();
+			float currDistrictArea = this.districts.get(i).calculateArea();
+			
+			float areaDeviation = Math.abs(enactedCurrDistrictArea - currDistrictArea) / enactedCurrDistrictArea * 100;
+			
+			this.districts.get(i).getObjectiveFunction().setEnactedAreaScore(1 - areaDeviation);
+		}
 	}
 	
-	public float calculateEnactedPopScore() {
-		return (float) 0.0;
+	public void calculateEnactedPopScore(Districting enacted) {
+		List<District> enactedDistricts = enacted.getDistricts();
+		for (int i = 0; i < enactedDistricts.size(); i++) {
+			float enactedCurrDistrictPopulation = enactedDistricts.get(i).getPopulation();
+			float currDistrictPopulation = this.districts.get(i).getPopulation();
+			
+			float popDeviation = Math.abs(enactedCurrDistrictPopulation - currDistrictPopulation) / enactedCurrDistrictPopulation * 100;
+			
+			this.districts.get(i).getObjectiveFunction().setEnactedPopScore(1 - popDeviation);
+		}
 	}
 	
 	public float calculateMajMinScore() {

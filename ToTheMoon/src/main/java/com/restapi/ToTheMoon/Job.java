@@ -29,6 +29,7 @@ public class Job {
 	private String id;
 	private BoxAndWhisker boxAndWhisker;
 	private Map<Integer, Integer> precinctPopulationMap;
+	private Map<Integer, Float> precinctAreaMap;
 	private Districting enactedDistricting;
 	private Districting averageDistricting;
 	
@@ -201,6 +202,9 @@ public class Job {
 		JSONObject geoJsonObject = (JSONObject) geoObject;
 		JSONArray allPrecinctsArray = (JSONArray) geoJsonObject.get("features");
 		Map<Integer, Integer> precinctPopulationMap = new HashMap<Integer, Integer>();
+		
+		Map<Integer, Float> precinctAreaMap = new HashMap<Integer, Float>();
+
 		for (int i = 0 ; i < allPrecinctsArray.size(); i++) {
 	    	JSONObject precinctObject = (JSONObject) allPrecinctsArray.get(i);
 	    	JSONObject propertiesObject = (JSONObject) precinctObject.get("properties");
@@ -208,13 +212,21 @@ public class Job {
 	    	int precinctId = Integer.parseInt((String)propertiesObject.get("id"));
     		Double totalPopulation = (Double) propertiesObject.get("TOTPOP");
     		precinctPopulationMap.put(precinctId, totalPopulation.intValue());
+    		
+    		double area = (Double) propertiesObject.get("area");
+    		precinctAreaMap.put(precinctId, (float)area);
+
 		}
 		this.setPrecinctPopulationMap(precinctPopulationMap);
+		this.setPrecinctAreaMap(precinctAreaMap);
+		System.out.println("*******************************************************************************************************************");
 	}
 	
 	public void fillDistrictings() throws FileNotFoundException, IOException, ParseException {
 		ArrayList<Districting> districtingList = new ArrayList<Districting>();
-		Object obj = new JSONParser().parse(new FileReader("D:\\Users\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d1000_c1000_r25_p10.json"));
+		String jobName = Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_JOB_1000_FILE_NAME;
+//		Object obj = new JSONParser().parse(new FileReader("D:\\Users\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d1000_c1000_r25_p10.json"));
+		Object obj = new JSONParser().parse(new FileReader(jobName));
 		JSONObject jsonObject = (JSONObject) obj;
 		JSONArray plansArray = (JSONArray) jsonObject.get("plans");
 		
@@ -252,6 +264,8 @@ public class Job {
 	    			int precinctId = ((Long) precinctsArray.get(k)).intValue() - 1;
 	    			newPrecinct.setId(precinctId);
 	    			newPrecinct.setPopulation(this.precinctPopulationMap.get(precinctId));
+	    			
+	    			newPrecinct.setArea(this.precinctAreaMap.get(precinctId));
 	    			precinctList.add(newPrecinct);
 	    		}
 	    		
@@ -312,5 +326,13 @@ public class Job {
 				return districting;
 		}
 		return null;
+	}
+
+	public Map<Integer, Float> getPrecinctAreaMap() {
+		return precinctAreaMap;
+	}
+
+	public void setPrecinctAreaMap(Map<Integer, Float> precinctAreaMap) {
+		this.precinctAreaMap = precinctAreaMap;
 	}
 }

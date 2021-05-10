@@ -16,8 +16,12 @@ import Database.DatabaseJob;
 import org.json.simple.parser.ParseException;
 
 public class TempEntityManager {
-	private static final String NEVADA_ENACTED_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_districts_with_data.json";
-	private static final String NEVADA_GEO_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_geometry.json";
+	// private static final String NEVADA_ENACTED_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_districts_with_data.json";
+	// private static final String NEVADA_GEO_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_geometry.json";
+	
+	private static final String NEVADA_ENACTED_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_ENACTED_FILE_NAME;
+	private static final String NEVADA_GEO_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME;
+
 	
 	private final String PERSISTENCE_UNIT_NAME = "ToTheMoon";
 	private EntityManagerFactory factory;

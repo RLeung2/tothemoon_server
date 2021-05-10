@@ -17,6 +17,7 @@ public class District {
 	private ObjectiveFunction ObjectiveFunction;
 	private int label;
 	private String geoData;
+	private float area;
 	
 	public District() {
 		this.population = 0;
@@ -136,6 +137,24 @@ public class District {
 
 	public void setGeoData(String geoData) {
 		this.geoData = geoData;
+	}
+
+	public float getArea() {
+		return area;
+	}
+
+	public void setArea(float area) {
+		this.area = area;
+	}
+	
+	public float calculateArea() {
+		float area = 0;
+		
+		for (Precinct p: this.precincts) {
+			area += p.getArea();
+		}
+		
+		return area;
 	}
 	
 	
