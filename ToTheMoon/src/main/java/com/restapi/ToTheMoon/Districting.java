@@ -91,8 +91,8 @@ public class Districting {
 	
 	/*All the methods below will be methods that do actual calculations 
 	 * */
-	public float calculateDevFromAvg() {
-		return (float) 0.0;
+	public float calculateDevFromAvg(Districting averageDistricting, MinorityPopulation minority) {
+		return (calculateDeviationFromComparedDistricting(averageDistricting, minority));
 	}
 	
 	public float calculateSplitCountyScore() {
@@ -324,7 +324,7 @@ public class Districting {
 		return combinedPrecincts;
 	}
 	
-	public float generateDeviationFromComparedDistricting(Districting comparedDistricting, MinorityPopulation minority) {
+	public float calculateDeviationFromComparedDistricting(Districting comparedDistricting, MinorityPopulation minority) {
 		List<District> comparedDistrictsList = comparedDistricting.getDistricts();
 		
 		float totalDeviationSum = 0;
