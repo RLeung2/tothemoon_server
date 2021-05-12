@@ -349,4 +349,11 @@ public class Districting {
 		float difference = Math.abs(observed - actual);
 		return difference / actual;
 	}
+	
+	public void generateObjectiveFunction() {
+		ObjectiveFunction objectiveFunction = new ObjectiveFunction();
+		objectiveFunction.setObjScore((float) Math.random());
+		
+		this.setObjectivefunction(objectiveFunction);
+	}
 }

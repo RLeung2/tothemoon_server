@@ -12,6 +12,10 @@ public class ObjectiveFunction {
 	private float splitCountyScore;
 	private Map<String, Float> objectiveValues;
 	
+	public ObjectiveFunction() {
+		
+	}
+	
 	public ObjectiveFunction(float objScore, float enactedAreaScore, float enactedPopScore, float majMinScore,
 			float areaPairDevScore, float splitCountyScore, Map<String, Float> objectiveValues) {
 		this.objScore = objScore;

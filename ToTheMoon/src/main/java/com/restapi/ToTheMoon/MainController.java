@@ -255,11 +255,13 @@ public class MainController {
         testJob.fillDistrictings();
         testJob.renumberDistrictings();
         testJob.generateBoxAndWhiskerData();
-        testJob.findAverageDistricting();	
+        testJob.findAverageDistricting();
+        testJob.generateDistrictingAnalysisSummary();
+        DistrictingAnalysisSummary testSummary = testJob.getDistrictingAnalysisSummary();
 		
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			String testJSON = mapper.writeValueAsString(testJob);
+			String testJSON = mapper.writeValueAsString(testSummary);
 	        return Response.ok(testJSON).build();
 		} catch (Exception e) {
 			e.printStackTrace();

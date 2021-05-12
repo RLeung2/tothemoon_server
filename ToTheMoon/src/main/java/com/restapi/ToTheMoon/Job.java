@@ -6,11 +6,14 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -277,6 +280,7 @@ public class Job {
 	    	}
 	    	newDistricting.setDistricts(districtList);
 	    	newDistricting.setId(i);
+	    	newDistricting.generateObjectiveFunction();
 	    	districtingList.add(newDistricting);
 	    }
 	    this.setDistrictings(districtingList);
@@ -334,5 +338,43 @@ public class Job {
 
 	public void setPrecinctAreaMap(Map<Integer, Float> precinctAreaMap) {
 		this.precinctAreaMap = precinctAreaMap;
+	}
+	
+	public void generateDistrictingAnalysisSummary() {
+		List<Districting> topTenByObjectiveScore = generateTopTenByObjectiveScore();
+		
+		DistrictingAnalysisSummary summary = new DistrictingAnalysisSummary();
+		summary.setTopTenObjectiveScores(topTenByObjectiveScore);
+		this.districtingAnalysisSummary = summary;
+	}
+	
+	public List<Districting> generateTopTenByObjectiveScore() {
+		PriorityQueue<Districting> pQueue = new PriorityQueue<Districting>(10, getObjectiveScoreComparator());
+		for (Districting districting: this.districtings) {
+			if (pQueue.size() < 10) {
+				pQueue.add(districting);
+			} else {
+				float minScoreInHeap = pQueue.peek().getObjectivefunction().getObjScore();
+				float currentScore = districting.getObjectivefunction().getObjScore();
+				if (currentScore > minScoreInHeap) {
+					pQueue.poll();
+					pQueue.add(districting);
+				}
+			}
+		}
+		List<Districting> topTenList = Arrays.asList(pQueue.toArray(new Districting[0]));
+		Collections.reverse(topTenList);
+		return topTenList;
+	}
+	
+	Comparator<Districting> getObjectiveScoreComparator() {
+	    return new Comparator<Districting>() {
+		    @Override
+		    public int compare(Districting d1, Districting d2) {
+		    	Float d1ObjectiveScore = d1.getObjectivefunction().getObjScore();
+		    	Float d2ObjectiveScore = d2.getObjectivefunction().getObjScore();
+		        return d1ObjectiveScore.compareTo(d2ObjectiveScore);
+		    }
+		};
 	}
 }
