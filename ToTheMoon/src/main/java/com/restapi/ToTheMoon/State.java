@@ -167,6 +167,7 @@ public class State {
 			currentDistrict.setMinorityPopulations(currentMinorityPopulationMap);
 			currentDistrict.setMinorityPopulationPercentages(currentMinorityPercentageMap);
 			currentDistrict.setPrecincts(listOfPrecinctLists.get(i));
+			currentDistrict.setLabel(i);
 		}
 		Districting enactedDistricting = new Districting();
 		enactedDistricting.setDistricts(districtList);

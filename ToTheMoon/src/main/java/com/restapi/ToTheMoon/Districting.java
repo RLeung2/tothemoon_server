@@ -183,7 +183,8 @@ public class Districting {
 		for (Map.Entry<Pair<District, District>, Integer> mapEntry : intersectionMap.entrySet()) {
 			Pair<District, District> districtPair = mapEntry.getKey();
 			int intersectionPopulation = mapEntry.getValue();
-			double intersectionEdgeWeight = intersectionPopulation != 0 ? 1 / (double)intersectionPopulation : 99999999.0;
+			//double intersectionEdgeWeight = intersectionPopulation != 0 ? 1 / (double)intersectionPopulation : 99999999.0;
+			double intersectionEdgeWeight = intersectionPopulation;
 			DefaultWeightedEdge edge = bipartiteGraph.addEdge(districtPair.getKey(), districtPair.getValue());
 			bipartiteGraph.setEdgeWeight(edge, intersectionEdgeWeight);
 		}
@@ -323,4 +324,25 @@ public class Districting {
 		return combinedPrecincts;
 	}
 	
+	public float generateDeviationFromComparedDistricting(Districting comparedDistricting, MinorityPopulation minority) {
+		List<District> comparedDistrictsList = comparedDistricting.getDistricts();
+		
+		float totalDeviationSum = 0;
+		for (int i = 0; i < comparedDistrictsList.size(); i++) {
+			District currentDistrict = this.districts.get(i);
+			District comparedDistrict = comparedDistrictsList.get(i);
+			Map<MinorityPopulation, Float> currentMinorityPercentagesMap = currentDistrict.getMinorityPopulationPercentages();
+			Map<MinorityPopulation, Float> comparedMinorityPercentagesMap = comparedDistrict.getMinorityPopulationPercentages();
+			float currentMinorityPercentage = currentMinorityPercentagesMap.get(minority);
+			float comparedMinorityPercentage = comparedMinorityPercentagesMap.get(minority);
+			float currentDeviation = calculatePercentDeviation(currentMinorityPercentage, comparedMinorityPercentage);
+			totalDeviationSum += currentDeviation;
+		}
+		return (totalDeviationSum / comparedDistrictsList.size());
+	}
+	
+	private float calculatePercentDeviation(float actual, float observed) {
+		float difference = Math.abs(observed - actual);
+		return difference / actual;
+	}
 }

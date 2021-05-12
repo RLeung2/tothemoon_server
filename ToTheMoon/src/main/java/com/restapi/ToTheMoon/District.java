@@ -134,11 +134,11 @@ public class District {
 		return geoData;
 	}
 
-
+	
 	public void setGeoData(String geoData) {
 		this.geoData = geoData;
 	}
-
+	
 	public float getArea() {
 		return area;
 	}
@@ -156,7 +156,7 @@ public class District {
 		
 		return area;
 	}
-	
-	
 
+	
+	
 }

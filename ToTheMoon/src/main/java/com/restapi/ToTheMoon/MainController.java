@@ -249,7 +249,7 @@ public class MainController {
 		
 		Districting enactedDistricting = stateObject.getEnactedDistricting();
         Job testJob = new Job();
-        testJob.setCurrMinorityPopulation(MinorityPopulation.ASIAN);
+        testJob.setCurrMinorityPopulation(MinorityPopulation.HISPANIC);
         testJob.setEnactedDistricting(enactedDistricting);
         testJob.generatePrecinctPopulationMap(NEVADA_GEO_FILE);
         testJob.fillDistrictings();
