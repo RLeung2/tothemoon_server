@@ -95,6 +95,10 @@ public class Districting {
 		return (calculateDeviationFromComparedDistricting(averageDistricting, minority));
 	}
 	
+	public float calculateDevFromEnacted(Districting enactedDistricting, MinorityPopulation minority) {
+		return (calculateDeviationFromComparedDistricting(enactedDistricting, minority));
+	}
+	
 	public float calculateSplitCountyScore() {
 		return (float) 0.0;
 	}
