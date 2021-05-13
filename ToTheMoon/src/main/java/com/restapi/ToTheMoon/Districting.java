@@ -53,6 +53,9 @@ public class Districting {
 	private int id;
 	private ObjectiveFunction objectivefunction;
 	private List<District> districts;
+	private float deviationFromEnacted;
+	private float deviationFromAverage;
+	private int majorityMinorityDistricts;
 	
 	public Districting() {
 		
@@ -89,14 +92,38 @@ public class Districting {
 		this.districts = districts;
 	}
 	
-	/*All the methods below will be methods that do actual calculations 
-	 * */
-	public float calculateDevFromAvg(Districting averageDistricting, MinorityPopulation minority) {
-		return (calculateDeviationFromComparedDistricting(averageDistricting, minority));
+	public float getDeviationFromEnacted() {
+		return deviationFromEnacted;
+	}
+
+	public void setDeviationFromEnacted(float deviationFromEnacted) {
+		this.deviationFromEnacted = deviationFromEnacted;
+	}
+
+	public float getDeviationFromAverage() {
+		return deviationFromAverage;
+	}
+
+	public void setDeviationFromAverage(float deviationFromAverage) {
+		this.deviationFromAverage = deviationFromAverage;
 	}
 	
-	public float calculateDevFromEnacted(Districting enactedDistricting, MinorityPopulation minority) {
-		return (calculateDeviationFromComparedDistricting(enactedDistricting, minority));
+	public int getMajorityMinorityDistricts() {
+		return majorityMinorityDistricts;
+	}
+
+	public void setMajorityMinorityDistricts(int majorityMinorityDistricts) {
+		this.majorityMinorityDistricts = majorityMinorityDistricts;
+	}
+
+	/*All the methods below will be methods that do actual calculations 
+	 * */
+	public void calculateDevFromAvg(Districting averageDistricting, MinorityPopulation minority) {
+		this.setDeviationFromAverage(calculateDeviationFromComparedDistricting(averageDistricting, minority));
+	}
+	
+	public void calculateDevFromEnacted(Districting enactedDistricting, MinorityPopulation minority) {
+		this.setDeviationFromEnacted(calculateDeviationFromComparedDistricting(enactedDistricting, minority));
 	}
 	
 	public float calculateSplitCountyScore() {

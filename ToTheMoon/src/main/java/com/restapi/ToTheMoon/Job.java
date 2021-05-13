@@ -342,9 +342,13 @@ public class Job {
 	
 	public void generateDistrictingAnalysisSummary() {
 		List<Districting> topTenByObjectiveScore = generateTopTenByObjectiveScore();
+		List<Districting> highScoringPlansCloseToEnacted = generateHighScoringPlansCloseToEnacted();
+		List<Districting> highScoringMajorityMinorityPlans = generateHighScoringMajorityMinorityPlans();
 		
 		DistrictingAnalysisSummary summary = new DistrictingAnalysisSummary();
 		summary.setTopTenObjectiveScores(topTenByObjectiveScore);
+		summary.setPlansCloseToEnacted(highScoringPlansCloseToEnacted);
+		summary.setHighScoringMajMinDistricts(highScoringMajorityMinorityPlans);
 		this.districtingAnalysisSummary = summary;
 	}
 	
@@ -354,8 +358,8 @@ public class Job {
 			if (pQueue.size() < 10) {
 				pQueue.add(districting);
 			} else {
-				float minScoreInHeap = pQueue.peek().getObjectivefunction().getObjScore();
 				float currentScore = districting.getObjectivefunction().getObjScore();
+				float minScoreInHeap = pQueue.peek().getObjectivefunction().getObjScore();
 				if (currentScore > minScoreInHeap) {
 					pQueue.poll();
 					pQueue.add(districting);
@@ -363,6 +367,7 @@ public class Job {
 			}
 		}
 		List<Districting> topTenList = Arrays.asList(pQueue.toArray(new Districting[0]));
+		Collections.sort(topTenList, getObjectiveScoreComparator());
 		Collections.reverse(topTenList);
 		return topTenList;
 	}
@@ -377,4 +382,57 @@ public class Job {
 		    }
 		};
 	}
+	
+	public List<Districting> generateHighScoringPlansCloseToEnacted() {
+		PriorityQueue<Districting> pQueue = new PriorityQueue<Districting>(10, Collections.reverseOrder(getDeviationFromEnactedComparator()));
+		for (Districting districting: this.districtings) {
+			districting.calculateDevFromEnacted(this.enactedDistricting, this.currMinorityPopulation);
+			if (pQueue.size() < 10 && districting.getObjectivefunction().getObjScore() > 0.9) {
+				pQueue.add(districting);
+			} else if (districting.getObjectivefunction().getObjScore() > 0.9) {
+				float currentDeviation = districting.getDeviationFromEnacted();
+				float maxDeviationInHeap = pQueue.peek().getDeviationFromEnacted();
+				if (currentDeviation < maxDeviationInHeap) {
+					pQueue.poll();
+					pQueue.add(districting);
+				}
+			}
+		}
+		List<Districting> topTenList = Arrays.asList(pQueue.toArray(new Districting[0]));
+		Collections.sort(topTenList, getDeviationFromEnactedComparator());
+		return topTenList;
+	}
+	
+	Comparator<Districting> getDeviationFromEnactedComparator() {
+	    return new Comparator<Districting>() {
+		    @Override
+		    public int compare(Districting d1, Districting d2) {
+		    	Float d1ObjectiveScore = d1.getDeviationFromEnacted();
+		    	Float d2ObjectiveScore = d2.getDeviationFromEnacted();
+		        return d1ObjectiveScore.compareTo(d2ObjectiveScore);
+		    }
+		};
+	}
+	
+	public List<Districting> generateHighScoringMajorityMinorityPlans() {
+		PriorityQueue<Districting> pQueue = new PriorityQueue<Districting>(10, getObjectiveScoreComparator());
+		for (Districting districting: this.districtings) {
+			districting.setMajorityMinorityDistricts((int) (Math.random() * 5));
+			if (pQueue.size() < 10 && districting.getMajorityMinorityDistricts() > 0) {
+				pQueue.add(districting);
+			} else if (districting.getMajorityMinorityDistricts() > 0) {
+				float currentDeviation = districting.getObjectivefunction().getObjScore();
+				float minScoreInHeap = pQueue.peek().getObjectivefunction().getObjScore();
+				if (currentDeviation > minScoreInHeap) {
+					pQueue.poll();
+					pQueue.add(districting);
+				}
+			}
+		}
+		List<Districting> topTenList = Arrays.asList(pQueue.toArray(new Districting[0]));
+		Collections.sort(topTenList, getObjectiveScoreComparator());
+		Collections.reverse(topTenList);
+		return topTenList;
+	}
+	
 }
