@@ -22,6 +22,8 @@ import org.json.simple.parser.ParseException;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 public class Job {
 	
@@ -43,6 +45,45 @@ public class Job {
 //	TODO
 	public Job constrain(Map<Constraints, Float> filtersMap) {
 		return null;
+	}
+	
+	public boolean constrain(double popEq, String popType, double compactness, double minorityThreshhold, int minNumMajMinDistrict, String minorityType, List<Integer> incumbents, JsonObject plan) {
+		// Compactness
+		if (plan.get("gr_compact").getAsDouble() < compactness) {
+			return false;
+		}
+		
+		// Population Equality -- adjust for different population types
+		if (plan.get(popType).getAsDouble() < popEq) {
+			return false;
+		}
+		
+		// Incumbent protection
+		ArrayList<Integer> incumbentsProtectedInPlan = new ArrayList<Integer>();     
+		JsonArray jArray = plan.get("incumbentsProtected").getAsJsonArray();
+		if (jArray != null) { 
+		   for (int i = 0; i < jArray.size(); i++){ 
+			   incumbentsProtectedInPlan.add(jArray.get(i).getAsInt());
+		   } 
+		} 
+		
+		if (!incumbentsProtectedInPlan.containsAll(incumbents)) {
+			return false;
+		}
+		
+		// Majority Minority
+		int currMinMajDistricts = 0;
+    	JsonArray districtsArray = plan.get("districts").getAsJsonArray();
+    	for (int j = 0; j < districtsArray.size(); j++) {
+    		JsonObject districtObject = districtsArray.get(j).getAsJsonObject();
+	    	if(districtObject.get(minorityType).getAsDouble() >= minorityThreshhold)
+	    		currMinMajDistricts += 1;
+    	}
+    	
+    	if (currMinMajDistricts < minNumMajMinDistrict) 
+    		return false;
+
+		return true;
 	}
 	
 	public void generateBoxAndWhiskerData() {

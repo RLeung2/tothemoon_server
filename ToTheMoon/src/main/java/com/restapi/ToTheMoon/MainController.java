@@ -8,7 +8,11 @@ import javax.ws.rs.Produces;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -26,6 +30,10 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonReader;
+
 import javafx.util.Pair;
 
 import javax.servlet.http.HttpServlet;
@@ -133,6 +141,55 @@ public class MainController {
 		
         // TODO - random number now; change once constrain() is implemented
 		int numberDistrictingsLeft = 900 + (int)(Math.random() * 150);
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			String numLeft = mapper.writeValueAsString(numberDistrictingsLeft);
+	        return Response.ok(numLeft).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+    }
+	
+	@GET
+    @Path("/constrain/{minority}")
+	@Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response handleConstrainJob(@PathParam("minority") String input,
+    		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException {
+		
+        Job testJob = new Job();
+		
+		long startTime = System.nanoTime();	
+		
+		int counter = 0;
+		String jobFileName = Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_90000_FILE_NAME;
+	    try (
+	            InputStream inputStream = Files.newInputStream(java.nio.file.Path.of(jobFileName));
+	            JsonReader reader = new JsonReader(new InputStreamReader(inputStream));
+	    ) {            
+	        reader.beginObject();
+	        reader.nextName();
+	        reader.beginArray();
+	        while (reader.hasNext()) {
+	        	JsonObject plan = new Gson().fromJson(reader, JsonObject.class);
+	        	boolean validPlan = testJob.constrain(0.10, "totalPopulationScore", 0.03, 0.20, 5, "BPERCENTAGE", Arrays.asList(4,6,7), plan);
+	        	if (validPlan) {
+		        	counter++;
+	        	}
+	        }
+	        reader.endArray();
+	    } finally {
+		}
+
+
+		long endTime = System.nanoTime();
+		long duration = (endTime - startTime) / 1000000;  //divide by 1000000 to get milliseconds.
+		System.out.println(duration / 1000);
+
+		// Rest of constrain logic here -- i.e fillDistrictings, gill, box and whisker, etc.
+		
+		int numberDistrictingsLeft = counter;
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			String numLeft = mapper.writeValueAsString(numberDistrictingsLeft);
