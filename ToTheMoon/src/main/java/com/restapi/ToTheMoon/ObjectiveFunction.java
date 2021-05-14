@@ -1,5 +1,6 @@
 package com.restapi.ToTheMoon;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class ObjectiveFunction {
@@ -10,14 +11,17 @@ public class ObjectiveFunction {
 	private float majMinScore;
 	private float areaPairDevScore;
 	private float splitCountyScore;
-	private Map<String, Float> objectiveValues;
+	private float popEqScore;
+	private float compactnessScore;
+	private float devFromAverageScore;
+	private Map<Measures, Float> objectiveValues;
 	
 	public ObjectiveFunction() {
-		
+		this.objectiveValues = new HashMap<>();
 	}
 	
 	public ObjectiveFunction(float objScore, float enactedAreaScore, float enactedPopScore, float majMinScore,
-			float areaPairDevScore, float splitCountyScore, Map<String, Float> objectiveValues) {
+			float areaPairDevScore, float splitCountyScore, Map<Measures, Float> objectiveValues) {
 		this.objScore = objScore;
 		this.enactedAreaScore = enactedAreaScore;
 		this.enactedPopScore = enactedPopScore;
@@ -75,12 +79,36 @@ public class ObjectiveFunction {
 		this.splitCountyScore = splitCountyScore;
 	}
 
-	public Map<String, Float> getObjectiveValues() {
+	public Map<Measures, Float> getObjectiveValues() {
 		return objectiveValues;
 	}
 
-	public void setObjectiveValues(Map<String, Float> objectiveValues) {
+	public void setObjectiveValues(Map<Measures, Float> objectiveValues) {
 		this.objectiveValues = objectiveValues;
+	}
+
+	public float getPopEqScore() {
+		return popEqScore;
+	}
+
+	public void setPopEqScore(float popEqScore) {
+		this.popEqScore = popEqScore;
+	}
+
+	public float getCompactnessScore() {
+		return compactnessScore;
+	}
+
+	public void setCompactnessScore(float compactnessScore) {
+		this.compactnessScore = compactnessScore;
+	}
+
+	public float getDevFromAverageScore() {
+		return devFromAverageScore;
+	}
+
+	public void setDevFromAverageScore(float devFromAverageScore) {
+		this.devFromAverageScore = devFromAverageScore;
 	}
 	
 }

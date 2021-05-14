@@ -105,7 +105,12 @@ public class State {
 		ArrayList<Map<MinorityPopulation, Float>> listOfMinorityPercentageMaps = new ArrayList<Map<MinorityPopulation, Float>>();
 		
 		for (int i = 0 ; i < districtsArray.size(); i++) {
-			districtList.add(new District());
+			JSONObject currDistrict = (JSONObject) districtsArray.get(i);
+			JSONObject props = (JSONObject) currDistrict.get("properties");
+			Double area = (Double) props.get("area");
+			District d = new District();
+			d.setArea(area.floatValue());
+			districtList.add(d);
 			listOfPrecinctLists.add(new ArrayList<Precinct>());
 			hCVAPList.add(0);
 			bCVAPList.add(0);

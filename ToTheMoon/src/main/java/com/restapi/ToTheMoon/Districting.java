@@ -51,12 +51,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Districting {
 
 	private int id;
-	private ObjectiveFunction objectivefunction;
+	private ObjectiveFunction objectiveFunction; 
 	private List<District> districts;
 	private float deviationFromEnacted;
 	private float deviationFromAverage;
 	private int majorityMinorityDistricts;
-	
+
+
 	public Districting() {
 		
 	}
@@ -64,7 +65,7 @@ public class Districting {
 	public Districting(int id, ObjectiveFunction objectivefunction, List<District> districts) {
 		super();
 		this.id = id;
-		this.objectivefunction = objectivefunction;
+		this.objectiveFunction = objectivefunction;
 		this.districts = districts;
 	}
 
@@ -77,11 +78,11 @@ public class Districting {
 	}
 
 	public ObjectiveFunction getObjectivefunction() {
-		return objectivefunction;
+		return objectiveFunction;
 	}
 
 	public void setObjectivefunction(ObjectiveFunction objectivefunction) {
-		this.objectivefunction = objectivefunction;
+		this.objectiveFunction = objectivefunction;
 	}
 
 	public List<District> getDistricts() {
@@ -119,43 +120,69 @@ public class Districting {
 	/*All the methods below will be methods that do actual calculations 
 	 * */
 	public void calculateDevFromAvg(Districting averageDistricting, MinorityPopulation minority) {
-		this.setDeviationFromAverage(calculateDeviationFromComparedDistricting(averageDistricting, minority));
+		float avgScore = calculateDeviationFromComparedDistricting(averageDistricting, minority, true);
+		this.setDeviationFromAverage(avgScore);
+		this.objectiveFunction.setDevFromAverageScore(avgScore);
 	}
 	
 	public void calculateDevFromEnacted(Districting enactedDistricting, MinorityPopulation minority) {
-		this.setDeviationFromEnacted(calculateDeviationFromComparedDistricting(enactedDistricting, minority));
+		float devEnactedPopScore = calculateDeviationFromComparedDistricting(enactedDistricting, minority, false);
+		this.setDeviationFromEnacted(devEnactedPopScore);
+		this.objectiveFunction.setEnactedPopScore(devEnactedPopScore);
 	}
 	
 	public float calculateSplitCountyScore() {
 		return (float) 0.0;
 	}
 	
-	public float calculateObjScore() {
-		return (float) 0.0;
+	public void calculateObjScore(float popEqWeight, float compactnessWeight, float devFromAvgWeight, 
+			float devFromEnactedPopWeight, float devFromEnactedAreaWeight) {
+		for (int i = 0; i < this.districts.size(); i++) {
+			District currDistrict = this.districts.get(i);
+			float popEqValueDistrict = popEqWeight * currDistrict.getObjectiveFunction().getPopEqScore();
+			float compactnessValueDistrict = compactnessWeight * currDistrict.getObjectiveFunction().getCompactnessScore();
+			float devAvgValueDistrict = devFromAvgWeight * currDistrict.getObjectiveFunction().getDevFromAverageScore();
+			float devEnactedPopValueDistrict = devFromEnactedPopWeight * currDistrict.getObjectiveFunction().getEnactedPopScore();
+			float devEnactedAreaValueDistrict = devFromEnactedAreaWeight * currDistrict.getObjectiveFunction().getEnactedAreaScore();
+			
+			Map<Measures, Float> objectiveValues = currDistrict.getObjectiveFunction().getObjectiveValues();
+			objectiveValues.put(Measures.POPULATION_EQUALITY, popEqValueDistrict);
+			objectiveValues.put(Measures.GRAPH_COMPACTNESS, compactnessValueDistrict);
+			objectiveValues.put(Measures.DEVIATION_FROM_AVG, devAvgValueDistrict);
+			objectiveValues.put(Measures.DEVIATION_FROM_ENACTED_POPULATION, devEnactedPopValueDistrict);
+			objectiveValues.put(Measures.DEVIATION_FROM_ENACTED_AREA, devEnactedAreaValueDistrict);
+		}
+		float popEqValueDistrict = popEqWeight * this.objectiveFunction.getPopEqScore();
+		float compactnessValueDistrict = compactnessWeight * this.objectiveFunction.getCompactnessScore();
+		float devAvgValueDistrict = devFromAvgWeight * this.objectiveFunction.getDevFromAverageScore();
+		float devEnactedPopValueDistrict = devFromEnactedPopWeight * this.objectiveFunction.getEnactedPopScore();
+		float devEnactedAreaValueDistrict = devFromEnactedAreaWeight * this.objectiveFunction.getEnactedAreaScore();
+		
+		Map<Measures, Float> districtingObjectiveValues = this.objectiveFunction.getObjectiveValues();
+		districtingObjectiveValues.put(Measures.POPULATION_EQUALITY, popEqValueDistrict);
+		districtingObjectiveValues.put(Measures.GRAPH_COMPACTNESS, compactnessValueDistrict);
+		districtingObjectiveValues.put(Measures.DEVIATION_FROM_AVG, devAvgValueDistrict);
+		districtingObjectiveValues.put(Measures.DEVIATION_FROM_ENACTED_POPULATION, this.deviationFromEnacted);
+		districtingObjectiveValues.put(Measures.DEVIATION_FROM_ENACTED_AREA, devEnactedAreaValueDistrict);
+		
+		this.objectiveFunction.setObjScore(popEqValueDistrict + compactnessValueDistrict + devAvgValueDistrict + devEnactedPopValueDistrict + devEnactedAreaValueDistrict);
 	}
 	
 	public void calculateEnactedAreaScore(Districting enacted) {
 		List<District> enactedDistricts = enacted.getDistricts();
+		float currScore = 0;
 		for (int i = 0; i < enactedDistricts.size(); i++) {
 			float enactedCurrDistrictArea = enactedDistricts.get(i).getArea();
 			float currDistrictArea = this.districts.get(i).calculateArea();
 			
-			float areaDeviation = Math.abs(enactedCurrDistrictArea - currDistrictArea) / enactedCurrDistrictArea * 100;
+			float areaDeviation = this.calculatePercentDeviation(enactedCurrDistrictArea, currDistrictArea);
+
+			currScore += areaDeviation;
 			
-			this.districts.get(i).getObjectiveFunction().setEnactedAreaScore(1 - areaDeviation);
+			this.districts.get(i).getObjectiveFunction().setEnactedAreaScore(areaDeviation);
 		}
-	}
-	
-	public void calculateEnactedPopScore(Districting enacted) {
-		List<District> enactedDistricts = enacted.getDistricts();
-		for (int i = 0; i < enactedDistricts.size(); i++) {
-			float enactedCurrDistrictPopulation = enactedDistricts.get(i).getPopulation();
-			float currDistrictPopulation = this.districts.get(i).getPopulation();
-			
-			float popDeviation = Math.abs(enactedCurrDistrictPopulation - currDistrictPopulation) / enactedCurrDistrictPopulation * 100;
-			
-			this.districts.get(i).getObjectiveFunction().setEnactedPopScore(1 - popDeviation);
-		}
+		currScore = currScore / this.districts.size();
+		this.objectiveFunction.setEnactedAreaScore(currScore);
 	}
 	
 	public float calculateMajMinScore() {
@@ -166,12 +193,26 @@ public class Districting {
 		return (float) 0.0;
 	}
 	
-	public float calculatePopEqualityScore() {
-		return (float) 0.0;
-	}
-	
-	public float calculateCompactness(Constraints compactnessType) {
-		return (float) 0.0;
+	public void calculatePopEqualityScore() {
+		int totalPop = 0;
+		float idealPop = 0;
+		for (int i = 0; i < this.districts.size(); i++) {
+			District currDistrict = this.districts.get(i);
+			totalPop += currDistrict.getPopulation();
+		}
+		
+		idealPop = (float)(totalPop / this.districts.size());
+		
+		float totalPopEqScore = 0;
+		for (int i = 0; i < this.districts.size(); i++) {
+			District currDistrict = this.districts.get(i);
+			float popEqScore = calculatePercentDeviation(idealPop, (float) currDistrict.getPopulation());
+			totalPopEqScore += popEqScore;
+			currDistrict.getObjectiveFunction().setPopEqScore(popEqScore);
+		}
+		
+		totalPopEqScore = totalPopEqScore / this.districts.size();
+		this.objectiveFunction.setPopEqScore(totalPopEqScore);
 	}
 	
 	private static List<Float> calculatePolsbyPopperScore(List<Geometry> districtGeometryList) {
@@ -355,7 +396,7 @@ public class Districting {
 		return combinedPrecincts;
 	}
 	
-	public float calculateDeviationFromComparedDistricting(Districting comparedDistricting, MinorityPopulation minority) {
+	public float calculateDeviationFromComparedDistricting(Districting comparedDistricting, MinorityPopulation minority, boolean isAverage) {
 		List<District> comparedDistrictsList = comparedDistricting.getDistricts();
 		
 		float totalDeviationSum = 0;
@@ -368,6 +409,11 @@ public class Districting {
 			float comparedMinorityPercentage = comparedMinorityPercentagesMap.get(minority);
 			float currentDeviation = calculatePercentDeviation(currentMinorityPercentage, comparedMinorityPercentage);
 			totalDeviationSum += currentDeviation;
+			if (isAverage) {
+				currentDistrict.getObjectiveFunction().setDevFromAverageScore(currentDeviation);
+			} else {
+				currentDistrict.getObjectiveFunction().setEnactedPopScore(currentDeviation);
+			}
 		}
 		return (totalDeviationSum / comparedDistrictsList.size());
 	}

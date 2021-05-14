@@ -47,15 +47,15 @@ public class Job {
 		return null;
 	}
 	
-	public boolean constrain(double popEq, String popType, double compactness, double minorityThreshhold, int minNumMajMinDistrict, String minorityType, List<Integer> incumbents, JsonObject plan) {
+	public Districting constrain(double popEq, String popScoreType, String popType, double compactness, double minorityThreshhold, int minNumMajMinDistrict, String minorityType, List<Integer> incumbents, JsonObject plan, int index) {
 		// Compactness
 		if (plan.get("gr_compact").getAsDouble() < compactness) {
-			return false;
+			return null;
 		}
 		
 		// Population Equality -- adjust for different population types
-		if (plan.get(popType).getAsDouble() < popEq) {
-			return false;
+		if (plan.get(popScoreType).getAsDouble() < popEq) {
+			return null;
 		}
 		
 		// Incumbent protection
@@ -68,7 +68,7 @@ public class Job {
 		} 
 		
 		if (!incumbentsProtectedInPlan.containsAll(incumbents)) {
-			return false;
+			return null;
 		}
 		
 		// Majority Minority
@@ -81,9 +81,14 @@ public class Job {
     	}
     	
     	if (currMinMajDistricts < minNumMajMinDistrict) 
-    		return false;
+    		return null;
 
-		return true;
+    	// Fill districting logic of creating DistrictingObject goes here
+    	Districting d = readJsonToDistricting(plan, popType, index);
+    	d.setObjectivefunction(new ObjectiveFunction());
+    	d.getObjectivefunction().setCompactnessScore(plan.get("gr_compact").getAsFloat());
+    	d.setMajorityMinorityDistricts(currMinMajDistricts);
+		return d;
 	}
 	
 	public void generateBoxAndWhiskerData() {
@@ -148,19 +153,20 @@ public class Job {
 	    return elements.get(index-1);
 	}
 	
-//	TODO
-	public void instantiateObjectiveScores(Map<Measures, Float> measuresMap, Map<Constraints, Float> constraintsMap) {
-		
-	}
-	
-//	TODO
-	public void generateDistrictingAnalysisSummary(DistrictingAnalysisSummary districtingAnalysisSummary) {
-		
-	}
 	
 //	TODO
 	public void renumberDistrictings() {
-		for (Districting districting : this.districtings) {
+		List<Districting> topTenByObjectiveScore = this.districtingAnalysisSummary.getTopTenObjectiveScores();
+		List<Districting> highScoringPlansCloseToEnacted = this.districtingAnalysisSummary.getPlansCloseToEnacted();
+		List<Districting> highScoringMajorityMinorityPlans = this.districtingAnalysisSummary.getHighScoringMajMinDistricts();
+		
+		for (Districting districting : topTenByObjectiveScore) {
+	    	districting.gillConstructRenumbering(this.enactedDistricting);
+	    }
+		for (Districting districting : highScoringPlansCloseToEnacted) {
+	    	districting.gillConstructRenumbering(this.enactedDistricting);
+	    }
+		for (Districting districting : highScoringMajorityMinorityPlans) {
 	    	districting.gillConstructRenumbering(this.enactedDistricting);
 	    }
 	}
@@ -240,6 +246,20 @@ public class Job {
 	public void setAverageDistricting(Districting averageDistricting) {
 		this.averageDistricting = averageDistricting;
 	}
+	
+	public void applyMeasures(float popEqWeight, float compactnessWeight, float devFromAvgWeight, 
+			float devFromEnactedPopWeight, float devFromEnactedAreaWeight) {
+		for (int i = 0; i < this.districtings.size(); i++) {
+			Districting currDistricting = this.districtings.get(i);
+			currDistricting.calculatePopEqualityScore();
+			currDistricting.calculateDevFromEnacted(this.enactedDistricting, this.currMinorityPopulation);
+			currDistricting.calculateDevFromAvg(this.averageDistricting, this.currMinorityPopulation);
+			currDistricting.calculateEnactedAreaScore(this.enactedDistricting);
+			
+			currDistricting.calculateObjScore(popEqWeight, compactnessWeight, devFromAvgWeight, devFromEnactedPopWeight, devFromEnactedAreaWeight);
+		}
+		
+	}
 
 	public void generatePrecinctPopulationMap(String geoFile) throws FileNotFoundException, IOException, ParseException {
 		Object geoObject = new JSONParser().parse(new FileReader(geoFile));
@@ -253,7 +273,7 @@ public class Job {
 	    	JSONObject precinctObject = (JSONObject) allPrecinctsArray.get(i);
 	    	JSONObject propertiesObject = (JSONObject) precinctObject.get("properties");
 	    	
-	    	int precinctId = Integer.parseInt((String)propertiesObject.get("id"));
+	    	int precinctId = ((Long)propertiesObject.get("id")).intValue();
     		Double totalPopulation = (Double) propertiesObject.get("TOTPOP");
     		precinctPopulationMap.put(precinctId, totalPopulation.intValue());
     		
@@ -263,7 +283,73 @@ public class Job {
 		}
 		this.setPrecinctPopulationMap(precinctPopulationMap);
 		this.setPrecinctAreaMap(precinctAreaMap);
-		System.out.println("*******************************************************************************************************************");
+	}
+	
+	public Districting readJsonToDistricting(JsonObject planObject, String populationType, int index) {
+		JsonArray districtsArray = planObject.get("districts").getAsJsonArray();
+    	Districting newDistricting = new Districting();
+    	ArrayList<District> districtList = new ArrayList<District>();
+    	
+    	for (int j = 0; j < districtsArray.size(); j++) {
+    		JsonObject districtObject = districtsArray.get(j).getAsJsonObject();
+
+    		//Long districtNumber = (Long) districtObject.get("districtNumber");
+    		HashMap<MinorityPopulation, Float> minorityPercentagesMap = new HashMap<MinorityPopulation, Float>();
+    		if (populationType.equals("VAP")) {
+	    		Double hCVAP = districtObject.get("H" + populationType).getAsDouble();
+	    		Double wCVAP = districtObject.get("W" + populationType).getAsDouble();
+	    		Double bCVAP = districtObject.get("B" + populationType).getAsDouble();
+	    		Double asianCVAP = districtObject.get("ASIAN" + populationType).getAsDouble();
+	    		Double totalVAP = districtObject.get("VAP").getAsDouble();
+	    		
+	    		float hVAPPercentage = districtObject.get("HTPERCENTAGE").getAsFloat();
+	    		float bVAPPercentage = districtObject.get("BTPERCENTAGE").getAsFloat();
+	    		float asianVAPPercentage = districtObject.get("ATPERCENTAGE").getAsFloat();
+	    		
+	    		minorityPercentagesMap.put(MinorityPopulation.HISPANIC, hVAPPercentage);
+	    		minorityPercentagesMap.put(MinorityPopulation.AFRICAN_AMERICAN, bVAPPercentage);
+	    		minorityPercentagesMap.put(MinorityPopulation.ASIAN, asianVAPPercentage);
+    		}
+    		else {
+	    		Double hTotal = districtObject.get("HISP").getAsDouble();
+	    		Double wTotal = districtObject.get("WHITE").getAsDouble();
+	    		Double bTotal = districtObject.get("BLACK").getAsDouble();
+	    		Double asianTotal = districtObject.get("ASIAN").getAsDouble();
+	    		Double totalPopulation = districtObject.get("population").getAsDouble();
+	    		
+	    		float hVAPPercentage = districtObject.get("HPERCENTAGE").getAsFloat();
+	    		float bVAPPercentage = districtObject.get("BPERCENTAGE").getAsFloat();
+	    		float asianVAPPercentage = districtObject.get("ASIANPERCENTAGE").getAsFloat();
+	    		
+	    		minorityPercentagesMap.put(MinorityPopulation.HISPANIC, hVAPPercentage);
+	    		minorityPercentagesMap.put(MinorityPopulation.AFRICAN_AMERICAN, bVAPPercentage);
+	    		minorityPercentagesMap.put(MinorityPopulation.ASIAN, asianVAPPercentage);
+    		}
+    		
+    		JsonArray precinctsArray = districtObject.get("precincts").getAsJsonArray();
+    		ArrayList<Precinct> precinctList = new ArrayList<Precinct>();
+    		for (int k = 0; k < precinctsArray.size(); k++) {
+    			Precinct newPrecinct = new Precinct(0, 0, 0, 0, 0, 0, 0, null, null, 0);
+    			int precinctId = precinctsArray.get(k).getAsInt() - 1;
+    			newPrecinct.setId(precinctId);
+    			newPrecinct.setPopulation(this.precinctPopulationMap.get(precinctId));
+    			
+    			newPrecinct.setArea(this.precinctAreaMap.get(precinctId));
+    			precinctList.add(newPrecinct);
+    		}
+    		
+    		District district = new District();
+    		district.setMinorityPopulationPercentages(minorityPercentagesMap);
+    		district.setPrecincts(precinctList);
+    		district.setObjectiveFunction(new ObjectiveFunction());
+    		district.getObjectiveFunction().setCompactnessScore(districtObject.get("gr_compact").getAsFloat());
+    		district.setPopulation(districtObject.get("population").getAsInt());
+    		districtList.add(district);
+    	}
+    	newDistricting.setDistricts(districtList);
+    	newDistricting.setId(index);
+    	newDistricting.generateObjectiveFunction();
+		return newDistricting;
 	}
 	
 	public void fillDistrictings() throws FileNotFoundException, IOException, ParseException {
@@ -384,7 +470,7 @@ public class Job {
 	public void generateDistrictingAnalysisSummary() {
 		List<Districting> topTenByObjectiveScore = generateTopTenByObjectiveScore();
 		List<Districting> highScoringPlansCloseToEnacted = generateHighScoringPlansCloseToEnacted();
-		List<Districting> highScoringMajorityMinorityPlans = generateHighScoringMajorityMinorityPlans();
+		List<Districting> highScoringMajorityMinorityPlans = generatePlansCloseToAverage();
 		
 		DistrictingAnalysisSummary summary = new DistrictingAnalysisSummary();
 		summary.setTopTenObjectiveScores(topTenByObjectiveScore);
@@ -455,25 +541,35 @@ public class Job {
 		};
 	}
 	
-	public List<Districting> generateHighScoringMajorityMinorityPlans() {
-		PriorityQueue<Districting> pQueue = new PriorityQueue<Districting>(10, getObjectiveScoreComparator());
+	public List<Districting> generatePlansCloseToAverage() {
+		PriorityQueue<Districting> pQueue = new PriorityQueue<Districting>(10, getDeviationFromAverageComparator());
 		for (Districting districting: this.districtings) {
-			districting.setMajorityMinorityDistricts((int) (Math.random() * 5));
-			if (pQueue.size() < 10 && districting.getMajorityMinorityDistricts() > 0) {
+			districting.calculateDevFromAvg(this.averageDistricting, this.currMinorityPopulation);
+			if (pQueue.size() < 10) {
 				pQueue.add(districting);
-			} else if (districting.getMajorityMinorityDistricts() > 0) {
-				float currentDeviation = districting.getObjectivefunction().getObjScore();
-				float minScoreInHeap = pQueue.peek().getObjectivefunction().getObjScore();
-				if (currentDeviation > minScoreInHeap) {
+			} else {
+				float currentDeviation = districting.getDeviationFromAverage();
+				float maxScoreInHeap = pQueue.peek().getDeviationFromAverage();
+				if (currentDeviation < maxScoreInHeap) {
 					pQueue.poll();
 					pQueue.add(districting);
 				}
 			}
 		}
 		List<Districting> topTenList = Arrays.asList(pQueue.toArray(new Districting[0]));
-		Collections.sort(topTenList, getObjectiveScoreComparator());
-		Collections.reverse(topTenList);
+		Collections.sort(topTenList, getDeviationFromAverageComparator());
 		return topTenList;
 	}
 	
+	
+	Comparator<Districting> getDeviationFromAverageComparator() {
+	    return new Comparator<Districting>() {
+		    @Override
+		    public int compare(Districting d1, Districting d2) {
+		    	Float d1ObjectiveScore = d1.getDeviationFromAverage();
+		    	Float d2ObjectiveScore = d2.getDeviationFromAverage();
+		        return d1ObjectiveScore.compareTo(d2ObjectiveScore);
+		    }
+		};
+	}
 }
