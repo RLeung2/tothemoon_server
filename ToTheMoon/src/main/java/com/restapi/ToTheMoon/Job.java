@@ -471,11 +471,13 @@ public class Job {
 		List<Districting> topTenByObjectiveScore = generateTopTenByObjectiveScore();
 		List<Districting> highScoringPlansCloseToEnacted = generateHighScoringPlansCloseToEnacted();
 		List<Districting> highScoringMajorityMinorityPlans = generatePlansCloseToAverage();
+		List<Districting> fiveVeryDifferentPlans = generateVeryDifferentPlans();
 		
 		DistrictingAnalysisSummary summary = new DistrictingAnalysisSummary();
 		summary.setTopTenObjectiveScores(topTenByObjectiveScore);
 		summary.setPlansCloseToEnacted(highScoringPlansCloseToEnacted);
 		summary.setHighScoringMajMinDistricts(highScoringMajorityMinorityPlans);
+		summary.setTopFiveAreaPairDeviations(fiveVeryDifferentPlans);
 		this.districtingAnalysisSummary = summary;
 	}
 	
@@ -561,7 +563,6 @@ public class Job {
 		return topTenList;
 	}
 	
-	
 	Comparator<Districting> getDeviationFromAverageComparator() {
 	    return new Comparator<Districting>() {
 		    @Override
@@ -571,5 +572,54 @@ public class Job {
 		        return d1ObjectiveScore.compareTo(d2ObjectiveScore);
 		    }
 		};
+	}
+	
+	public List<Districting> generateVeryDifferentPlans() {
+		List<Districting> fiveVeryDifferentPlans = new ArrayList<Districting>();
+		fiveVeryDifferentPlans.add(findClosestDistrictingToPercentile(0));
+		fiveVeryDifferentPlans.add(findClosestDistrictingToPercentile(25));
+		fiveVeryDifferentPlans.add(this.averageDistricting);
+		fiveVeryDifferentPlans.add(findClosestDistrictingToPercentile(75));
+		fiveVeryDifferentPlans.add(findClosestDistrictingToPercentile(100));
+		return fiveVeryDifferentPlans;
+	}
+	
+	public Districting findClosestDistrictingToPercentile(int percentile) {
+		float minimumTotalMinorityPercentageDifference = Float.MAX_VALUE;
+		int closestDistrictingId = 0;
+		
+		for (Districting districting: this.districtings) {
+			List<District> districtsList = districting.getDistricts();
+			float totalMinorityPercentageDifference = 0;
+			
+			for (int i = 0; i < districtsList.size(); i++) {
+				District currentDistrict = districtsList.get(i);
+				totalMinorityPercentageDifference += calculatePercentageDifferenceOfDitrictComparedToPercentile(currentDistrict, i, percentile);
+			}
+			
+			if (totalMinorityPercentageDifference < minimumTotalMinorityPercentageDifference) {
+				closestDistrictingId = districting.getId();
+				minimumTotalMinorityPercentageDifference = totalMinorityPercentageDifference;
+			}
+		}
+		return getDistrictingById(closestDistrictingId);
+	}
+	
+	private float calculatePercentageDifferenceOfDitrictComparedToPercentile(District district, int index, int percentile) {
+		Map<Integer, Float> populationPercentagesMap;
+		if (percentile == 0)
+			populationPercentagesMap = this.boxAndWhisker.getMinPopDistrict();
+		else if (percentile == 25)
+			populationPercentagesMap = this.boxAndWhisker.getTwentyFifthPercentile();
+		else if (percentile == 75)
+			populationPercentagesMap = this.boxAndWhisker.getSeventyFifthPercentile();
+		else
+			populationPercentagesMap = this.boxAndWhisker.getMaxPopDistrict();
+
+		Map<MinorityPopulation, Float> currentMinorityPopulationPercentagesMap = district.getMinorityPopulationPercentages();
+		float districtAveragePopulationPercentage = populationPercentagesMap.get(index);
+		float currentDistrictPopulationPercentage = currentMinorityPopulationPercentagesMap.get(this.currMinorityPopulation);
+		float currentMinorityPercentageDifference = Math.abs(districtAveragePopulationPercentage - currentDistrictPopulationPercentage);
+		return currentMinorityPercentageDifference;
 	}
 }
