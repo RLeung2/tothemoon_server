@@ -136,7 +136,7 @@ public class MainController {
 	@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response handleConstrainDistrictings(@PathParam("minority") String input,
-    		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException {
+    		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException, InterruptedException {
 		
 		HttpSession session = req.getSession();
 		
@@ -152,45 +152,46 @@ public class MainController {
         testJob.generatePrecinctPopulationMap(GEO_FILE);
         
 		int counter = 0;
-		String jobFileName = Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_JOB_10000_FILE_NAME;
+		String jobFileName = Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_90000_FILE_NAME;
 		String testFile = "C:\\Users\\Robert\\Desktop\\sc_90000.json";
+
 		ArrayList<Districting> districtings = new ArrayList<>();
-	    try (
-	            InputStream inputStream = Files.newInputStream(java.nio.file.Path.of(jobFileName));
-	            JsonReader reader = new JsonReader(new InputStreamReader(inputStream));
-	    ) {            
-	        reader.beginObject();
-	        reader.nextName();
-	        reader.beginArray();
-	        while (reader.hasNext()) {
-	        	JsonObject plan = new Gson().fromJson(reader, JsonObject.class);
-	        	Districting validPlan = testJob.constrain(0.15, "totalPopulationScore", "VAP", 0.02, 0.20, 2, "HPERCENTAGE", Arrays.asList(1), plan, counter);
-	        	//Districting validPlan = testJob.constrain(0.10, "totalPopulationScore", "VAP", 0.03, 0.20, 5, "BPERCENTAGE", Arrays.asList(4,6,7), plan, counter);
-	        	if (validPlan != null) {
-	        		districtings.add(validPlan);
-		        	counter++;
-	        	}
-	        }
-	        reader.endArray();
-	    } finally {
+		
+		// TODO -- change this with a request from the DB or sumn
+		String[] fileNamesArr = {"sc_c1000_r500_p10.json", "sc_c1000_r500_p20.json", "sc_c2000_r500_p10.json",
+				"sc_c2000_r500_p20.json", "sc_c3000_r500_p10.json", "sc_c3000_r500_p20.json", 
+				"sc_c4000_r500_p20.json", "sc_c500_r500_p10.json", "sc_c500_r500_p20.json"};
+		
+		List<ConstrainerThread> threadList = new ArrayList<ConstrainerThread>();
+		for (int i = 0; i < fileNamesArr.length; i++) {
+			ConstrainerThread cThread = new ConstrainerThread(fileNamesArr[i], 10000 * i, testJob);
+			cThread.start();
+			threadList.add(cThread);
 		}
+		
+	    for(ConstrainerThread t : threadList) {
+	        t.join();
+	    }
+	    
+	    for(ConstrainerThread t : threadList) {
+	    	List<Districting> dList = t.getDistrictingsList();
+	        for (int i = 0; i < dList.size(); i++) {
+	        	districtings.add(dList.get(i));
+	        }
+	    }
         
         testJob.setDistrictings(districtings);
-//        testJob.renumberDistrictings();
-//        testJob.generateBoxAndWhiskerData();
         
         this.currJob = testJob;
         session.setAttribute("currJob", this.currJob);
 		
-        // TODO - random number now; change once constrain() is implemented
 		long endTime = System.nanoTime();
 
 		long duration = (endTime - startTime) / 1000000000;  //divide by 1000000 to get milliseconds.
         
-		int numberDistrictingsLeft = counter;
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			String numLeft = mapper.writeValueAsString(numberDistrictingsLeft);
+			String numLeft = mapper.writeValueAsString(districtings.size());
 			String dur = mapper.writeValueAsString(duration);
 	        return Response.ok(numLeft).build();
 		} catch (Exception e) {
@@ -332,6 +333,21 @@ public class MainController {
 		try {
 			String testJSON = mapper.writeValueAsString(testSummary);
 	        return Response.ok(testJSON).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+	}
+	
+	@GET
+    @Path("/updateTest")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response handleUpdate( @Context HttpServletRequest req) {
+
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			String districtingJSON = mapper.writeValueAsString(new ObjectiveFunction());
+	        return Response.ok(districtingJSON).build();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Response.serverError().build();
