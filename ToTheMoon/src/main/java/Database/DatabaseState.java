@@ -1,19 +1,34 @@
 package Database;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToOne;
 
 @Entity
 public class DatabaseState {
-	@Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+	private int id;
 	
-	@OneToOne
 	private String state;
+	
+	public DatabaseState() {
+	}
+	
+	public DatabaseState(String state) {
+		this.state = state;
+	}
+	
+	@Id
+    @Column(name = "STATE_ID")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public int getId() {
+		return id;
+	}
+	
+	public void setId(int newId) {
+		this.id = newId;
+	}
 	
 	public String getState() {
 		return state;

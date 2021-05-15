@@ -12,6 +12,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
 import Database.DatabaseJob;
+import Database.DatabaseState;
 
 import org.json.simple.parser.ParseException;
 
@@ -28,7 +29,7 @@ public class TempEntityManager {
 	
 	
 	public TempEntityManager() {
-		//this.factory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
+		this.factory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
 //		this.factory = new PersistenceProvider().createEntityManagerFactory("ToTheMoon");
 	}
 	
@@ -83,16 +84,34 @@ public class TempEntityManager {
 		return new Job();
 	}
 	
-	public void createJob() {
+	public void instantiateStatesandJobs() {
 		EntityManager em = this.factory.createEntityManager();
         em.getTransaction().begin();
         
-        DatabaseJob testJob = new DatabaseJob();
-		testJob.setStateId(0);
-		testJob.setRounds(10000);
-		testJob.setNumDistrictings(500);
+        DatabaseState nevada = new DatabaseState("NV");
+        DatabaseState southCarolina = new DatabaseState("SC");
+        DatabaseState washington = new DatabaseState("WA");
+        DatabaseJob nevadaJob = new DatabaseJob();
+        DatabaseJob southCarolinaJob = new DatabaseJob();
+        DatabaseJob washingtonJob = new DatabaseJob();
+        
+        nevadaJob.setJobState(nevada);
+        nevadaJob.setJobFilePath("nv_d1000_c1000_r25_p10.json");
+        
+        southCarolinaJob.setJobState(southCarolina);
+        southCarolinaJob.setJobFilePath("sc_d1000_c1020_r26_p11.json");
+        
+        washingtonJob.setJobState(washington);
+        washingtonJob.setJobFilePath("wa_d1000_c1030_r27_p12.json");
+        
+		em.persist(nevada);
+		em.persist(southCarolina);
+		em.persist(washington);
 		
-		em.persist(testJob);
+		em.persist(nevadaJob);
+		em.persist(southCarolinaJob);
+		em.persist(washingtonJob);
+		
 		em.getTransaction().commit();
 
         em.close();

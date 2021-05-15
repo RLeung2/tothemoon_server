@@ -9,7 +9,7 @@
 		<class>Database.DatabaseState</class>
 		<class>Database.DatabaseJob</class>
 		<properties>
-			 <property name="javax.persistence.jdbc.url" value="jdbc:mysql://mysql4.cs.stonybrook.edu:3306"/>
+			 <property name="javax.persistence.jdbc.url" value="jdbc:mysql://mysql4.cs.stonybrook.edu:3306/tothemoon"/>
 			 <property name="javax.persistence.jdbc.user" value="tothemoon"/>
 			 <property name="javax.persistence.jdbc.password" value="changeit"/>
 			 <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>

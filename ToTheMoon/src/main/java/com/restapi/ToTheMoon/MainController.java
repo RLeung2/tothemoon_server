@@ -39,7 +39,8 @@ import javafx.util.Pair;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-
+import java.util.List;
+import Database.DatabaseState;
 
 /** Exact path to the MainController is given by:
  * localhost:8080/ToTheMoon/webresources/tothemoon
@@ -83,7 +84,6 @@ public class MainController {
     public Response handleSendStateGeoJson(@PathParam("state") String state) {
 		String stateGeoJsonFilePath = UserInputToEnumTransformer.transformUserStateToStateGeoJsonFilePath(state);
 		ObjectMapper objectMapper = new ObjectMapper();
-		
 		Object object;
 		try {
 			object = new JSONParser().parse(new FileReader(stateGeoJsonFilePath));
@@ -96,6 +96,21 @@ public class MainController {
 		try {
 			String stateGeoJSON = objectMapper.writeValueAsString(jsonObject);
 	        return Response.ok(stateGeoJSON).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+    }
+	
+	@GET
+    @Path("/databasetest")
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response handleDatabaseTest() {
+		String databaseOk = "Database Ran Successfully!";
+		em.instantiateStatesandJobs();
+		
+		try {
+	        return Response.ok(databaseOk).build();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Response.serverError().build();
