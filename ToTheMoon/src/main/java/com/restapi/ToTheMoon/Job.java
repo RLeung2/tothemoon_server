@@ -319,7 +319,7 @@ public class Job {
 	    		
 	    		float hVAPPercentage = districtObject.get("HPERCENTAGE").getAsFloat();
 	    		float bVAPPercentage = districtObject.get("BPERCENTAGE").getAsFloat();
-	    		float asianVAPPercentage = districtObject.get("ASIANPERCENTAGE").getAsFloat();
+	    		float asianVAPPercentage = districtObject.get("APERCENTAGE").getAsFloat();
 	    		
 	    		minorityPercentagesMap.put(MinorityPopulation.HISPANIC, hVAPPercentage);
 	    		minorityPercentagesMap.put(MinorityPopulation.AFRICAN_AMERICAN, bVAPPercentage);

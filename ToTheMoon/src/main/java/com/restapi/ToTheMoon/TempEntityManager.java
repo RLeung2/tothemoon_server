@@ -74,7 +74,6 @@ public class TempEntityManager {
 		State stateObject = new State();
 		stateObject.setCurrState(state);
 		stateObject.setJobSummaries(stateJobSummaries);
-		stateObject.generateEnactedDistricting(NEVADA_ENACTED_FILE, NEVADA_GEO_FILE);
 		
 		return stateObject;
 		//return new State(state, enactedDistricting, stateJobSummaries);

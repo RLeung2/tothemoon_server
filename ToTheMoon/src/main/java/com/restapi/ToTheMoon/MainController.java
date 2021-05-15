@@ -66,7 +66,9 @@ public class MainController {
 		
 		USState stateEnum = UserInputToEnumTransformer.transformUserStateToEnum(state);
 		State currState = em.getState(stateEnum);
-		
+
+		currState.generateEnactedDistricting(Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_ENACTED_FILE_NAME, 
+				Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_GEOMETRY_FILE_NAME);
 		this.currState = currState;
 		session.setAttribute("currState", this.currState);
 		
@@ -138,10 +140,9 @@ public class MainController {
     @Produces(MediaType.APPLICATION_JSON)
     public Response handleConstrainDistrictings(@PathParam("minority") String input, String body,
     		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException, InterruptedException {
-		
+		ObjectMapper mapper = new ObjectMapper();
 		HttpSession session = req.getSession();
 		
-		long startTime = System.nanoTime();
 		String GEO_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_GEOMETRY_FILE_NAME;
 		
 		MinorityPopulation minority = UserInputToEnumTransformer.transformUserMinorityPopToEnum(input);
@@ -154,20 +155,33 @@ public class MainController {
         
 		int counter = 0;
 		String jobFileName = Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_90000_FILE_NAME;
-		String testFile = "C:\\Users\\Robert\\Desktop\\sc_90000.json";
 
 		ArrayList<Districting> districtings = new ArrayList<>();
 		
 		// TODO -- change this with a request from the DB or sumn
-		String[] fileNamesArr = {"sc_c1000_r500_p10.json", "sc_c1000_r500_p20.json", "sc_c2000_r500_p10.json",
-				"sc_c2000_r500_p20.json", "sc_c3000_r500_p10.json", "sc_c3000_r500_p20.json", 
-				"sc_c4000_r500_p20.json", "sc_c500_r500_p10.json", "sc_c500_r500_p20.json"};
+//		String[] fileNamesArr = {"sc_c1000_r500_p10.json", "sc_c1000_r500_p20.json", "sc_c2000_r500_p10.json",
+//				"sc_c2000_r500_p20.json", "sc_c3000_r500_p10.json", "sc_c3000_r500_p20.json", 
+//				"sc_c4000_r500_p20.json", "sc_c500_r500_p10.json", "sc_c500_r500_p20.json"};
 		
 		// String[] fileNamesArr = {Constants.NEVADA_JOB_10000_FILE_NAME};
+		String[] fileNamesArr = {"sc_c1000_r500_p10.json"};
+		
+		
+		ConstraintsJSON requestBody = mapper.readValue(body, ConstraintsJSON.class);
+		String popEqScoreType = "";
+		String minorityPopPercentageType = "";
+		if (requestBody.popType.equals("VAP")) {
+			popEqScoreType = "tvapScore";
+			minorityPopPercentageType = input.substring(0,1).toUpperCase() + "TPERCENTAGE";
+		} else {
+			popEqScoreType = "totalPopulationScore";
+			minorityPopPercentageType = input.substring(0,1).toUpperCase() + "PERCENTAGE";
+		}
 		
 		List<ConstrainerThread> threadList = new ArrayList<ConstrainerThread>();
 		for (int i = 0; i < fileNamesArr.length; i++) {
-			ConstrainerThread cThread = new ConstrainerThread(fileNamesArr[i], 10000 * i, testJob);
+			ConstrainerThread cThread = new ConstrainerThread(fileNamesArr[i], 10000 * i, testJob, requestBody.popEq, popEqScoreType, 
+					requestBody.popType, requestBody.compactness, requestBody.mmThreshhold, requestBody.numMM, requestBody.incumbents, minorityPopPercentageType);
 			cThread.start();
 			threadList.add(cThread);
 		}
@@ -191,15 +205,9 @@ public class MainController {
         
         this.currJob = testJob;
         session.setAttribute("currJob", this.currJob);
-		
-		long endTime = System.nanoTime();
-
-		long duration = (endTime - startTime) / 1000000000;  //divide by 1000000 to get milliseconds.
         
-		ObjectMapper mapper = new ObjectMapper();
 		try {
 			String numLeft = mapper.writeValueAsString(districtings.size());
-			String dur = mapper.writeValueAsString(duration);
 	        return Response.ok(numLeft).build();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -208,7 +216,6 @@ public class MainController {
     }
 	
 	
-	// TODO - not implemented yet
 	@POST
     @Path("/measures")
 	//@Consumes(MediaType.APPLICATION_JSON)

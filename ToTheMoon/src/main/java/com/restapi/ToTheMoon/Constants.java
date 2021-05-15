@@ -11,5 +11,7 @@ public class Constants {
 	public static final String NEVADA_GEOMETRY_FILE_NAME = "nv_precincts_with_areas.json";
 	
 	public static final String SC_JOB_90000_FILE_NAME = "sc_90000.json";
+	public static final String SC_ENACTED_FILE_NAME = "sc_districts_ALL.json";
 	public static final String SC_JOB_GEOMETRY_FILE_NAME = "sc_precincts_with_areas.json";
+
 }
