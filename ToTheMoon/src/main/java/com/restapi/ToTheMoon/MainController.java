@@ -1,6 +1,7 @@
 package com.restapi.ToTheMoon;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -131,11 +132,11 @@ public class MainController {
         return Response.ok(greeting).build();
     }
 	
-	@GET
+	@POST
     @Path("/constrainJob/{minority}")
 	@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response handleConstrainDistrictings(@PathParam("minority") String input,
+    public Response handleConstrainDistrictings(@PathParam("minority") String input, String body,
     		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException, InterruptedException {
 		
 		HttpSession session = req.getSession();
@@ -162,6 +163,8 @@ public class MainController {
 				"sc_c2000_r500_p20.json", "sc_c3000_r500_p10.json", "sc_c3000_r500_p20.json", 
 				"sc_c4000_r500_p20.json", "sc_c500_r500_p10.json", "sc_c500_r500_p20.json"};
 		
+		// String[] fileNamesArr = {Constants.NEVADA_JOB_10000_FILE_NAME};
+		
 		List<ConstrainerThread> threadList = new ArrayList<ConstrainerThread>();
 		for (int i = 0; i < fileNamesArr.length; i++) {
 			ConstrainerThread cThread = new ConstrainerThread(fileNamesArr[i], 10000 * i, testJob);
@@ -173,10 +176,14 @@ public class MainController {
 	        t.join();
 	    }
 	    
+	    int idNums = 0;
 	    for(ConstrainerThread t : threadList) {
 	    	List<Districting> dList = t.getDistrictingsList();
 	        for (int i = 0; i < dList.size(); i++) {
-	        	districtings.add(dList.get(i));
+	        	Districting districting = dList.get(i);
+	        	districting.setId(idNums);
+	        	idNums++;
+	        	districtings.add(districting);
 	        }
 	    }
         
@@ -202,7 +209,7 @@ public class MainController {
 	
 	
 	// TODO - not implemented yet
-	@GET
+	@POST
     @Path("/measures")
 	//@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
