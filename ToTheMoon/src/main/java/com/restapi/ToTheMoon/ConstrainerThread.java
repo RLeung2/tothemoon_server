@@ -26,9 +26,10 @@ public class ConstrainerThread extends Thread {
 	private int numMM;
 	private List<Integer> incumbents;
 	private String minorityPopPercentageType;
+	private List<Districting> districtings;
 	
 	public ConstrainerThread(String fileName, int counter, Job job, float popEq, String popEqScoreType, String popType, 
-			float compactness, float mmThreshhold, int numMM, List<Integer> incumbents, String minorityPopPercentageType) {
+			float compactness, float mmThreshhold, int numMM, List<Integer> incumbents, String minorityPopPercentageType, List<Districting> districtings) {
 		this.fileName = fileName;
 		this.districtingsList = new ArrayList<>();
 		this.counter = counter;
@@ -42,6 +43,7 @@ public class ConstrainerThread extends Thread {
 		this.numMM = numMM;
 		this.incumbents = incumbents;
 		this.minorityPopPercentageType = minorityPopPercentageType;
+		this.districtings = districtings;
 	}
 
 	@Override
@@ -55,14 +57,15 @@ public class ConstrainerThread extends Thread {
 	        reader.beginArray();
 	        while (reader.hasNext()) {
 	        	JsonObject plan = new Gson().fromJson(reader, JsonObject.class);
-	        	// Districting validPlan = this.job.constrain(0.15, "totalPopulationScore", "VAP", 0.02, 0.20, 2, "HPERCENTAGE", Arrays.asList(1), plan, counter);
 	        	Districting validPlan = this.job.constrain(this.popEq, this.popEqScoreType, this.popType, this.compactness, 
 	        			this.mmThreshhold, this.numMM, this.minorityPopPercentageType, this.incumbents, plan, this.counter);
 	        	if (validPlan != null) {
-	        		this.districtingsList.add(validPlan);
+	        		this.districtings.add(validPlan);
 	        	}
 	        }
 	        reader.endArray();
+	        inputStream.close();
+	        reader.close();
 	    } catch (IOException e) {
 			e.printStackTrace();
 		} finally {

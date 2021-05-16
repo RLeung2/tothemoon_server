@@ -58,6 +58,18 @@ public class Job {
 			return null;
 		}
 		
+		// Majority Minority
+		int currMinMajDistricts = 0;
+    	JsonArray districtsArray = plan.get("districts").getAsJsonArray();
+    	for (int j = 0; j < districtsArray.size(); j++) {
+    		JsonObject districtObject = districtsArray.get(j).getAsJsonObject();
+	    	if(districtObject.get(minorityType).getAsDouble() >= minorityThreshhold)
+	    		currMinMajDistricts += 1;
+    	}
+    	
+    	if (currMinMajDistricts < minNumMajMinDistrict) 
+    		return null;
+    	
 		// Incumbent protection
 		ArrayList<Integer> incumbentsProtectedInPlan = new ArrayList<Integer>();     
 		JsonArray jArray = plan.get("incumbentsProtected").getAsJsonArray();
@@ -70,18 +82,6 @@ public class Job {
 		if (!incumbentsProtectedInPlan.containsAll(incumbents)) {
 			return null;
 		}
-		
-		// Majority Minority
-		int currMinMajDistricts = 0;
-    	JsonArray districtsArray = plan.get("districts").getAsJsonArray();
-    	for (int j = 0; j < districtsArray.size(); j++) {
-    		JsonObject districtObject = districtsArray.get(j).getAsJsonObject();
-	    	if(districtObject.get(minorityType).getAsDouble() >= minorityThreshhold)
-	    		currMinMajDistricts += 1;
-    	}
-    	
-    	if (currMinMajDistricts < minNumMajMinDistrict) 
-    		return null;
 
     	// Fill districting logic of creating DistrictingObject goes here
     	Districting d = readJsonToDistricting(plan, popType, index);

@@ -14,8 +14,14 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.core.*;
@@ -55,6 +61,9 @@ public class MainController {
 	private TempEntityManager entityManager = new TempEntityManager();
 	private State currState;
 	private Job currJob;
+	
+	private ExecutorService service = Executors.newFixedThreadPool(11);
+
 	
 	@GET
     @Path("/{state}")
@@ -169,8 +178,6 @@ public class MainController {
         
 		int counter = 0;
 		String jobFileName = Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_90000_FILE_NAME;
-
-		ArrayList<Districting> districtings = new ArrayList<>();
 		
 		// TODO -- change this with a request from the DB or sumn
 //		String[] fileNamesArr = {"sc_c1000_r500_p10.json", "sc_c1000_r500_p20.json", "sc_c2000_r500_p10.json",
@@ -192,33 +199,29 @@ public class MainController {
 			minorityPopPercentageType = input.substring(0,1).toUpperCase() + "PERCENTAGE";
 		}
 		
-		List<ConstrainerThread> threadList = new ArrayList<ConstrainerThread>();
+
+		List<Districting> districtings = Collections.synchronizedList(new ArrayList<>());	
+		testJob.setDistrictings(null);
+		List<Callable<Object>> todo = new ArrayList<Callable<Object>>();
+
 		for (int i = 0; i < fileNamesArr.length; i++) {
 			ConstrainerThread cThread = new ConstrainerThread(fileNamesArr[i], 10000 * i, testJob, requestBody.popEq, popEqScoreType, 
-					requestBody.popType, requestBody.compactness, requestBody.mmThreshhold, requestBody.numMM, requestBody.incumbents, minorityPopPercentageType);
-			cThread.start();
-			threadList.add(cThread);
+					requestBody.popType, requestBody.compactness, requestBody.mmThreshhold, requestBody.numMM, requestBody.incumbents, minorityPopPercentageType, districtings);
+			todo.add(Executors.callable(cThread));
 		}
 		
-	    for(ConstrainerThread t : threadList) {
-	        t.join();
-	    }
+		List<Future<Object>> answers = service.invokeAll(todo);
 	    
-	    int idNums = 0;
-	    for(ConstrainerThread t : threadList) {
-	    	List<Districting> dList = t.getDistrictingsList();
-	        for (int i = 0; i < dList.size(); i++) {
-	        	Districting districting = dList.get(i);
-	        	districting.setId(idNums);
-	        	idNums++;
-	        	districtings.add(districting);
-	        }
+		
+	    for(int i = 0; i < districtings.size(); i++) {
+	    	districtings.get(i).setId(i);
 	    }
         
         testJob.setDistrictings(districtings);
         
         this.currJob = testJob;
         session.setAttribute("currJob", this.currJob);
+        
         
 		try {
 			String numLeft = mapper.writeValueAsString(districtings.size());
@@ -232,22 +235,25 @@ public class MainController {
 	
 	@POST
     @Path("/measures")
-	//@Consumes(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response handleSetMeasures(String jsonInput, @Context HttpServletRequest req) throws JsonGenerationException, JsonMappingException, IOException {
 		HttpSession session = req.getSession();
+		
+		ObjectMapper mapper = new ObjectMapper();
+		MeasuresJSON requestBody = mapper.readValue(jsonInput, MeasuresJSON.class);
+		
 		Job job = (Job) session.getAttribute("currJob");
 		
 		job.generateBoxAndWhiskerData();
 		job.findAverageDistricting();
-		job.applyMeasures(1, 1, 1, 1, 1);
+		job.applyMeasures(requestBody.popEqWeight, requestBody.compactnessWeight, requestBody.devFromAvgWeight, requestBody.devFromEnactedPopWeight, requestBody.devFromEnactedAreaWeight);
 		job.generateDistrictingAnalysisSummary();
         job.renumberDistrictings();
         job.generateBoxAndWhiskerData();
         
         DistrictingAnalysisSummary summary = job.getDistrictingAnalysisSummary();
         Districting dis = job.getDistrictingAtIndex(0);
-        ObjectMapper mapper = new ObjectMapper();
 		try {
 			String summaryJson = mapper.writeValueAsString(summary);
 	        return Response.ok(summaryJson).build();
