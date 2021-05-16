@@ -165,26 +165,27 @@ public class MainController {
     }
 	
 	@POST
-    @Path("/constrainJob/{minority}")
+    @Path("/constrainJob/{minority}/{jobNumber}")
 	@Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response handleConstrainDistrictings(@PathParam("minority") String input, String body,
+    public Response handleConstrainDistrictings(@PathParam("minority") String input, @PathParam("jobNumber") String jobID, String body,
     		@Context HttpServletRequest req) throws FileNotFoundException, IOException, ParseException, InterruptedException {
 		ObjectMapper mapper = new ObjectMapper();
 		HttpSession session = req.getSession();
 		
-		String GEO_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_GEOMETRY_FILE_NAME;
 		
 		MinorityPopulation minority = UserInputToEnumTransformer.transformUserMinorityPopToEnum(input);
 		State currState = (State) session.getAttribute("currState");
+
+		String geoFileName = em.getPrecinctGeometry(currState.getCurrState());
+		String GEO_FILE = Constants.YOUR_DIRECTORY_PREFIX + geoFileName;
+		
 		Districting enactedDistricting = currState.getEnactedDistricting();
         Job testJob = new Job();
         testJob.setCurrMinorityPopulation(minority);
         testJob.setEnactedDistricting(enactedDistricting);
         testJob.generatePrecinctPopulationMap(GEO_FILE);
         
-		int counter = 0;
-		String jobFileName = Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_90000_FILE_NAME;
 		
 		// TODO -- change this with a request from the DB or sumn
 //		String[] fileNamesArr = {"sc_c1000_r500_p10.json", "sc_c1000_r500_p20.json", "sc_c2000_r500_p10.json",
@@ -192,7 +193,9 @@ public class MainController {
 //				"sc_c4000_r500_p20.json", "sc_c500_r500_p10.json", "sc_c500_r500_p20.json"};
 		
 		// String[] fileNamesArr = {Constants.NEVADA_JOB_10000_FILE_NAME};
-		String[] fileNamesArr = {"sc_c1000_r500_p10.json"};
+		//String[] fileNamesArr = {"sc_c1000_r500_p10.json"};
+		
+		List<String> fileNamesArr = em.getJobNumberJobPaths(currState.getCurrState(), Integer.parseInt(jobID));
 		
 		
 		ConstraintsJSON requestBody = mapper.readValue(body, ConstraintsJSON.class);
@@ -211,8 +214,8 @@ public class MainController {
 		testJob.setDistrictings(null);
 		List<Callable<Object>> todo = new ArrayList<Callable<Object>>();
 
-		for (int i = 0; i < fileNamesArr.length; i++) {
-			ConstrainerThread cThread = new ConstrainerThread(fileNamesArr[i], 10000 * i, testJob, requestBody.popEq, popEqScoreType, 
+		for (int i = 0; i < fileNamesArr.size(); i++) {
+			ConstrainerThread cThread = new ConstrainerThread(fileNamesArr.get(i), 10000 * i, testJob, requestBody.popEq, popEqScoreType, 
 					requestBody.popType, requestBody.compactness, requestBody.mmThreshhold, requestBody.numMM, requestBody.incumbents, minorityPopPercentageType, districtings);
 			todo.add(Executors.callable(cThread));
 //			service.submit(cThread);

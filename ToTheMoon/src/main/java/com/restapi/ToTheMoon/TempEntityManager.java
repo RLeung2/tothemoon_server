@@ -21,21 +21,9 @@ import Database.DatabaseState;
 
 import org.json.simple.parser.ParseException;
 
-public class TempEntityManager {
-	// private static final String NEVADA_ENACTED_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_districts_with_data.json";
-	// private static final String NEVADA_GEO_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_geometry.json";
-	
-	private static final String NEVADA_ENACTED_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_ENACTED_FILE_NAME;
-	private static final String NEVADA_GEO_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME;
-
-	
-	private final String PERSISTENCE_UNIT_NAME = "ToTheMoon";
-	private EntityManagerFactory factory;
-	
+public class TempEntityManager {	
 	
 	public TempEntityManager() {
-		this.factory = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT_NAME);
-//		this.factory = new PersistenceProvider().createEntityManagerFactory("ToTheMoon");
 	}
 	
 	public List<JobSummary> getNevadaJobSummaries(USState state) {
@@ -63,37 +51,37 @@ public class TempEntityManager {
 		return nevadaJobSummaries;
 	}
 	
-	public List<JobSummary> getJobSummaries(USState state) {
-		List<JobSummary> jobSummaries = new ArrayList<JobSummary>();
-		HashMap<USState, String> stateToStateStringMap = new HashMap<USState, String>();
-		stateToStateStringMap.put(USState.NV, "NV");
-		stateToStateStringMap.put(USState.SC, "SC");
-		stateToStateStringMap.put(USState.WA, "WA");
-		EntityManager em = this.factory.createEntityManager();
-        em.getTransaction().begin();
-        
-		TypedQuery<DatabaseState> fetchStatesQuery = em.createQuery("SELECT s FROM DatabaseState s WHERE s.state=:stateName", DatabaseState.class);
-		fetchStatesQuery.setParameter("stateName", stateToStateStringMap.get(state));
-		List<DatabaseState> fetchedStates = fetchStatesQuery.getResultList();
-		int stateId = fetchedStates.get(0).getId();
-		
-		TypedQuery<DatabaseJob> fetchJobsQuery = em.createQuery("SELECT j FROM DatabaseJob j WHERE j.stateId=:id", DatabaseJob.class);
-		fetchStatesQuery.setParameter("id", stateId);
-		List<DatabaseJob> fetchedJobs = fetchJobsQuery.getResultList();
-		System.out.println(fetchedJobs.get(0).getJobFilePath());
-		
-		for (int i = 0; i < fetchedJobs.size(); i++) {
-			DatabaseJob currJob = fetchedJobs.get(i);
-			String currJobPath = currJob.getJobFilePath();
-			String[] currJobStringParameters = currJobPath.split("_");
-			String[] currJobPopulationEqualityString = (currJobStringParameters[3].substring(1, currJobStringParameters[3].length())).split("\\.");
-			float currJobPopulationEquality = Float.parseFloat(currJobPopulationEqualityString[0]);
-			int currJobRounds = Integer.parseInt(currJobStringParameters[2].substring(1, currJobStringParameters[2].length()));
-			int currJobCoolingPeriod = Integer.parseInt(currJobStringParameters[1].substring(1, currJobStringParameters[1].length()));
-			int currJobNumDistrictings = Integer.parseInt(currJobStringParameters[0].substring(1, currJobStringParameters[0].length()));
-			JobSummary newJobSummary = new JobSummary(state, currJobNumDistrictings, currJobPopulationEquality, currJobRounds, currJobCoolingPeriod, 1);
-			jobSummaries.add(newJobSummary);
-		}
+//	public List<JobSummary> getJobSummaries(USState state) {
+//		List<JobSummary> jobSummaries = new ArrayList<JobSummary>();
+//		HashMap<USState, String> stateToStateStringMap = new HashMap<USState, String>();
+//		stateToStateStringMap.put(USState.NV, "NV");
+//		stateToStateStringMap.put(USState.SC, "SC");
+//		stateToStateStringMap.put(USState.WA, "WA");
+//		EntityManager em = this.factory.createEntityManager();
+//        em.getTransaction().begin();
+//        
+//		TypedQuery<DatabaseState> fetchStatesQuery = em.createQuery("SELECT s FROM DatabaseState s WHERE s.state=:stateName", DatabaseState.class);
+//		fetchStatesQuery.setParameter("stateName", stateToStateStringMap.get(state));
+//		List<DatabaseState> fetchedStates = fetchStatesQuery.getResultList();
+//		int stateId = fetchedStates.get(0).getId();
+//		
+//		TypedQuery<DatabaseJob> fetchJobsQuery = em.createQuery("SELECT j FROM DatabaseJob j WHERE j.stateId=:id", DatabaseJob.class);
+//		fetchStatesQuery.setParameter("id", stateId);
+//		List<DatabaseJob> fetchedJobs = fetchJobsQuery.getResultList();
+//		System.out.println(fetchedJobs.get(0).getJobFilePath());
+//		
+//		for (int i = 0; i < fetchedJobs.size(); i++) {
+//			DatabaseJob currJob = fetchedJobs.get(i);
+//			String currJobPath = currJob.getJobFilePath();
+//			String[] currJobStringParameters = currJobPath.split("_");
+//			String[] currJobPopulationEqualityString = (currJobStringParameters[3].substring(1, currJobStringParameters[3].length())).split("\\.");
+//			float currJobPopulationEquality = Float.parseFloat(currJobPopulationEqualityString[0]);
+//			int currJobRounds = Integer.parseInt(currJobStringParameters[2].substring(1, currJobStringParameters[2].length()));
+//			int currJobCoolingPeriod = Integer.parseInt(currJobStringParameters[1].substring(1, currJobStringParameters[1].length()));
+//			int currJobNumDistrictings = Integer.parseInt(currJobStringParameters[0].substring(1, currJobStringParameters[0].length()));
+//			JobSummary newJobSummary = new JobSummary(state, currJobNumDistrictings, currJobPopulationEquality, currJobRounds, currJobCoolingPeriod, 1);
+//			jobSummaries.add(newJobSummary);
+//		}
 		
 //		
 //		String[] nevadaJobTwoStringParameters = nevadaJobTwoFileName.split("_");
@@ -105,11 +93,11 @@ public class TempEntityManager {
 //		
 //		nevadaJobSummaries.add(new JobSummary(state, nevadaJobOneNumDistrictings, nevadaJobOnePopulationEquality, nevadaJobOneRounds, nevadaJobOneCoolingPeriod, nevadaJobOneFileName));
 //		nevadaJobSummaries.add(new JobSummary(state, nevadaJobTwoNumDistrictings, nevadaJobTwoPopulationEquality, nevadaJobTwoRounds, nevadaJobTwoCoolingPeriod, nevadaJobTwoFileName));
-		em.getTransaction().commit();
-
-        em.close();
-		return jobSummaries;
-	}
+//		em.getTransaction().commit();
+//
+//        em.close();
+//		return jobSummaries;
+//	}
 	
 //	TODO
 //	public List<JobSummary> getNewYorkJobSummaries(USState state) {
@@ -136,90 +124,90 @@ public class TempEntityManager {
 		return new Job();
 	}
 	
-	public List<String> instantiateStatesandJobs() {
-		EntityManager em = this.factory.createEntityManager();
-        em.getTransaction().begin();
-        
-        DatabaseState nevada = new DatabaseState("NV");
-        DatabaseState southCarolina = new DatabaseState("SC");
-        DatabaseState washington = new DatabaseState("WA");
-        List<String> entitiesToStringList = new ArrayList<String>();
-        entitiesToStringList.add(nevada.toString());
-        entitiesToStringList.add(southCarolina.toString());
-        entitiesToStringList.add(washington.toString());
-		em.persist(nevada);
-		em.persist(southCarolina);
-		em.persist(washington);
-        
-        File nevadaDirectoryPath = new File("C:\\Users\\Brian\\OneDrive\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\Nevada");
-        File nevadaJobsList[] = nevadaDirectoryPath.listFiles();
-        for(File file : nevadaJobsList) {
-        	DatabaseJob nevadaJob = new DatabaseJob();
-            String nevadaFileName = file.getName();
-            nevadaJob.setJobState(nevada);
-            nevadaJob.setJobFilePath(nevadaFileName);
-            nevadaJob.setJobNumber(1);
-            entitiesToStringList.add(nevadaJob.toString());
-    		em.persist(nevadaJob);
-        }
-        
-        File southCarolinaDirectoryPath = new File("C:\\Users\\Brian\\OneDrive\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\SouthCarolina");
-        File southCarolinaJobsList[] = southCarolinaDirectoryPath.listFiles();
-        for(File file : southCarolinaJobsList) {
-            DatabaseJob southCarolinaJob = new DatabaseJob();
-            String southCarolinaFileName = file.getName();
-            southCarolinaJob.setJobState(southCarolina);
-            southCarolinaJob.setJobFilePath(southCarolinaFileName);
-            southCarolinaJob.setJobNumber(1);
-            entitiesToStringList.add(southCarolinaJob.toString());
-    		em.persist(southCarolinaJob);
-        }
-        
-        File washingtonDirectoryPath = new File("C:\\Users\\Brian\\OneDrive\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\Washington");
-        File washingtonJobsList[] = washingtonDirectoryPath.listFiles();
-        for(File file : washingtonJobsList) {
-            DatabaseJob washingtonJob = new DatabaseJob();
-            String washingtonFileName = file.getName();
-            washingtonJob.setJobState(washington);
-            washingtonJob.setJobFilePath(washingtonFileName);
-            washingtonJob.setJobNumber(1);
-            entitiesToStringList.add(washingtonJob.toString());
-    		em.persist(washingtonJob);
-        }
-		
-		em.getTransaction().commit();
-
-        em.close();
-        
-        return entitiesToStringList;
-	}
-	
-	public String instantiateEnacted(USState state) {
-		EntityManager em = this.factory.createEntityManager();
-        em.getTransaction().begin();
-        
-        HashMap<USState, String> stateToStateStringMap = new HashMap<USState, String>();
-		stateToStateStringMap.put(USState.NV, "NV");
-		stateToStateStringMap.put(USState.SC, "SC");
-		stateToStateStringMap.put(USState.WA, "WA");
+//	public List<String> instantiateStatesandJobs() {
+//		EntityManager em = this.factory.createEntityManager();
+//        em.getTransaction().begin();
+//        
 //        DatabaseState nevada = new DatabaseState("NV");
 //        DatabaseState southCarolina = new DatabaseState("SC");
 //        DatabaseState washington = new DatabaseState("WA");
-        DatabaseEnacted newEnacted = new DatabaseEnacted();
-        String enactedToString = "enactedfilepath";
-        
-        newEnacted.setEnactedFilePath(enactedToString);
-        
-        enactedToString = newEnacted.toString();
-        
-		em.persist(newEnacted);
-		
-		em.getTransaction().commit();
-
-        em.close();
-        
-        return enactedToString;
-	}
+//        List<String> entitiesToStringList = new ArrayList<String>();
+//        entitiesToStringList.add(nevada.toString());
+//        entitiesToStringList.add(southCarolina.toString());
+//        entitiesToStringList.add(washington.toString());
+//		em.persist(nevada);
+//		em.persist(southCarolina);
+//		em.persist(washington);
+//        
+//        File nevadaDirectoryPath = new File("C:\\Users\\Brian\\OneDrive\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\Nevada");
+//        File nevadaJobsList[] = nevadaDirectoryPath.listFiles();
+//        for(File file : nevadaJobsList) {
+//        	DatabaseJob nevadaJob = new DatabaseJob();
+//            String nevadaFileName = file.getName();
+//            nevadaJob.setJobState(nevada);
+//            nevadaJob.setJobFilePath(nevadaFileName);
+//            nevadaJob.setJobNumber(1);
+//            entitiesToStringList.add(nevadaJob.toString());
+//    		em.persist(nevadaJob);
+//        }
+//        
+//        File southCarolinaDirectoryPath = new File("C:\\Users\\Brian\\OneDrive\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\SouthCarolina");
+//        File southCarolinaJobsList[] = southCarolinaDirectoryPath.listFiles();
+//        for(File file : southCarolinaJobsList) {
+//            DatabaseJob southCarolinaJob = new DatabaseJob();
+//            String southCarolinaFileName = file.getName();
+//            southCarolinaJob.setJobState(southCarolina);
+//            southCarolinaJob.setJobFilePath(southCarolinaFileName);
+//            southCarolinaJob.setJobNumber(1);
+//            entitiesToStringList.add(southCarolinaJob.toString());
+//    		em.persist(southCarolinaJob);
+//        }
+//        
+//        File washingtonDirectoryPath = new File("C:\\Users\\Brian\\OneDrive\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\Washington");
+//        File washingtonJobsList[] = washingtonDirectoryPath.listFiles();
+//        for(File file : washingtonJobsList) {
+//            DatabaseJob washingtonJob = new DatabaseJob();
+//            String washingtonFileName = file.getName();
+//            washingtonJob.setJobState(washington);
+//            washingtonJob.setJobFilePath(washingtonFileName);
+//            washingtonJob.setJobNumber(1);
+//            entitiesToStringList.add(washingtonJob.toString());
+//    		em.persist(washingtonJob);
+//        }
+//		
+//		em.getTransaction().commit();
+//
+//        em.close();
+//        
+//        return entitiesToStringList;
+//	}
+//	
+//	public String instantiateEnacted(USState state) {
+//		EntityManager em = this.factory.createEntityManager();
+//        em.getTransaction().begin();
+//        
+//        HashMap<USState, String> stateToStateStringMap = new HashMap<USState, String>();
+//		stateToStateStringMap.put(USState.NV, "NV");
+//		stateToStateStringMap.put(USState.SC, "SC");
+//		stateToStateStringMap.put(USState.WA, "WA");
+////        DatabaseState nevada = new DatabaseState("NV");
+////        DatabaseState southCarolina = new DatabaseState("SC");
+////        DatabaseState washington = new DatabaseState("WA");
+//        DatabaseEnacted newEnacted = new DatabaseEnacted();
+//        String enactedToString = "enactedfilepath";
+//        
+//        newEnacted.setEnactedFilePath(enactedToString);
+//        
+//        enactedToString = newEnacted.toString();
+//        
+//		em.persist(newEnacted);
+//		
+//		em.getTransaction().commit();
+//
+//        em.close();
+//        
+//        return enactedToString;
+//	}
 	
 	public JobSummary getInitialJobSummary(USState state, int jobNumber) {
 //		List<JobSummary> jobSummaries = new ArrayList<JobSummary>();
@@ -232,7 +220,7 @@ public class TempEntityManager {
 		float currJobPopulationEquality = Float.parseFloat(currJobPopulationEqualityString[0]);
 		int currJobRounds = Integer.parseInt(currJobStringParameters[2].substring(1, currJobStringParameters[2].length()));
 		int currJobCoolingPeriod = Integer.parseInt(currJobStringParameters[1].substring(1, currJobStringParameters[1].length()));
-		int currJobNumDistrictings = (jobNumber == 1) ? 10000 : 100000;
+		int currJobNumDistrictings = (jobNumber == 1) ? 100000 : 10000;
 		JobSummary newJobSummary = new JobSummary(state, currJobNumDistrictings, currJobPopulationEquality, currJobRounds, currJobCoolingPeriod, jobNumber);
 //        for(File file : jobFileList) {
 //        	String jobFileName = file.getName();
