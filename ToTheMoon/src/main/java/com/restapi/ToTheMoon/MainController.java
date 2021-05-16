@@ -55,14 +55,10 @@ import Database.DatabaseState;
 @Path("/tothemoon")
 public class MainController {
 	private TempEntityManager em = new TempEntityManager();
-	private static final String NEVADA_ENACTED_FILE = "D:\\\\Users\\\\Documents\\\\GitHub\\\\tothemoon_server\\\\ToTheMoon\\\\src\\\\main\\\\java\\\\DistrictingData\\\\nv_districts_with_data.json";
-	private static final String NEVADA_GEO_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME;
-	
-	private TempEntityManager entityManager = new TempEntityManager();
 	private State currState;
 	private Job currJob;
 	
-	private ExecutorService service = Executors.newFixedThreadPool(11);
+	private ExecutorService service = Executors.newFixedThreadPool(15);
 
 	
 	@GET
@@ -74,11 +70,22 @@ public class MainController {
 		ObjectMapper mapper = new ObjectMapper();
 		
 		USState stateEnum = UserInputToEnumTransformer.transformUserStateToEnum(state);
-		State currState = em.getState(stateEnum);
+		
+		State stateObject = new State();
+		stateObject.setCurrState(stateEnum);
+		JobSummary job1 = em.getInitialJobSummary(stateEnum, 1);
+		JobSummary job2 = em.getInitialJobSummary(stateEnum, 2);
+		List<JobSummary> stateJobSummaries = new ArrayList<>();
+		stateJobSummaries.add(job1);
+		stateJobSummaries.add(job2);
 
-		currState.generateEnactedDistricting(Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_ENACTED_FILE_NAME, 
-				Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME);
-		this.currState = currState;
+		stateObject.setJobSummaries(stateJobSummaries);
+		String enactedFileName = em.getEnactedGeometry(stateEnum);
+		String precinctGeometryFileName = em.getPrecinctGeometry(stateEnum);
+
+		stateObject.generateEnactedDistricting(Constants.YOUR_DIRECTORY_PREFIX + enactedFileName, 
+				Constants.YOUR_DIRECTORY_PREFIX + precinctGeometryFileName);
+		this.currState = stateObject;
 		session.setAttribute("currState", this.currState);
 		try {
 			String stateJSON = mapper.writeValueAsString(currState);
@@ -166,7 +173,7 @@ public class MainController {
 		ObjectMapper mapper = new ObjectMapper();
 		HttpSession session = req.getSession();
 		
-		String GEO_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME;
+		String GEO_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_GEOMETRY_FILE_NAME;
 		
 		MinorityPopulation minority = UserInputToEnumTransformer.transformUserMinorityPopToEnum(input);
 		State currState = (State) session.getAttribute("currState");
@@ -185,7 +192,7 @@ public class MainController {
 //				"sc_c4000_r500_p20.json", "sc_c500_r500_p10.json", "sc_c500_r500_p20.json"};
 		
 		// String[] fileNamesArr = {Constants.NEVADA_JOB_10000_FILE_NAME};
-		String[] fileNamesArr = {Constants.NEVADA_JOB_10000_FILE_NAME};
+		String[] fileNamesArr = {"sc_c1000_r500_p10.json"};
 		
 		
 		ConstraintsJSON requestBody = mapper.readValue(body, ConstraintsJSON.class);
@@ -208,10 +215,12 @@ public class MainController {
 			ConstrainerThread cThread = new ConstrainerThread(fileNamesArr[i], 10000 * i, testJob, requestBody.popEq, popEqScoreType, 
 					requestBody.popType, requestBody.compactness, requestBody.mmThreshhold, requestBody.numMM, requestBody.incumbents, minorityPopPercentageType, districtings);
 			todo.add(Executors.callable(cThread));
+//			service.submit(cThread);
 		}
 		
 		List<Future<Object>> answers = service.invokeAll(todo);
-	    
+//	    service.shutdown();
+//	    service.awaitTermination(24L, TimeUnit.HOURS);
 		
 	    for(int i = 0; i < districtings.size(); i++) {
 	    	districtings.get(i).setId(i);
