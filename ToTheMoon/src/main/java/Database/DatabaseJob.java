@@ -17,6 +17,8 @@ public class DatabaseJob {
 	
 	private String jobFilePath;
 	
+	private int jobNumber;
+	
 //	private int numDistrictings;
 //	
 //	private float populationEquality;
@@ -31,7 +33,7 @@ public class DatabaseJob {
 	}
 	
 	@Id
-    @Column(name = "JOB_ID")
+    @Column(name = "JOBID")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	public int getId() {
 		return id;
@@ -42,7 +44,7 @@ public class DatabaseJob {
 	}
 	
 	@OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "STATE_ID")
+    @JoinColumn(name = "STATEID")
 	public DatabaseState getJobState() {
 		return jobState;
 	}
@@ -57,6 +59,14 @@ public class DatabaseJob {
 	
 	public void setJobFilePath(String newJobFilePath) {
 		this.jobFilePath = newJobFilePath;
+	}
+	
+	public int getJobNumber() {
+		return jobNumber;
+	}
+	
+	public void setJobNumber(int newJobNumber) {
+		this.jobNumber = newJobNumber;
 	}
 	
 //	public int getNumDistrictings() {
@@ -107,6 +117,6 @@ public class DatabaseJob {
 	
 	@Override
     public String toString() {
-		return "DatabaseJob [jobState=" + jobState.getState() + ", jobFilePath=" + jobFilePath + "]";
+		return "DatabaseJob [jobState=" + jobState.getState() + ", jobFilePath=" + jobFilePath +  ", jobNumber=" + jobNumber + "]";
     }
 }

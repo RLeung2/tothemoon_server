@@ -20,7 +20,7 @@ public class DatabaseState {
 	}
 	
 	@Id
-    @Column(name = "STATE_ID")
+    @Column(name = "STATEID")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	public int getId() {
 		return id;
@@ -43,8 +43,8 @@ public class DatabaseState {
 //		{
 //			return "Nevada";
 //		}
-//		else if (this.state == USState.NY) {
-//			return "New York";
+//		else if (this.state == USState.SC) {
+//			return "South Carolina";
 //		}
 //		else
 //		{

@@ -7,11 +7,11 @@ public class JobSummary {
 	private float populationEquality;
 	private int rounds;
 	private int coolingPeriod;
-	private String jobId;
-	private int recom;
+	private int jobId;
+//	private int recom;
 	
 	public JobSummary(USState state, int numDistrictings, float populationEquality, int rounds, int coolingPeriod,
-			String jobId) {
+			int jobId) {
 		super();
 		this.state = state;
 		this.numDistrictings = numDistrictings;
@@ -65,20 +65,20 @@ public class JobSummary {
 		this.coolingPeriod = coolingPeriod;
 	}
 
-	public String getJobId() {
+	public int getJobId() {
 		return jobId;
 	}
 
-	public void setJobId(String jobId) {
+	public void setJobId(int jobId) {
 		this.jobId = jobId;
 	}
 	
-	public int getRecom() {
-		return recom;
-	}
-
-	public void setRecom(int newRecom) {
-		this.recom = newRecom;
-	}
+//	public int getRecom() {
+//		return recom;
+//	}
+//
+//	public void setRecom(int newRecom) {
+//		this.recom = newRecom;
+//	}
 	
 }

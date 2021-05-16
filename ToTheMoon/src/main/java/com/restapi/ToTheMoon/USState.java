@@ -2,6 +2,6 @@ package com.restapi.ToTheMoon;
 
 public enum USState {
 	NV,
-	NY,
+	SC,
 	WA
 }

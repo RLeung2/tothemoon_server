@@ -8,6 +8,8 @@
 		<provider>org.hibernate.ejb.HibernatePersistence</provider>
 		<class>Database.DatabaseState</class>
 		<class>Database.DatabaseJob</class>
+		<class>Database.DatabaseEnacted</class>
+		<class>Database.DatabasePrecinctGeometry</class>
 		<properties>
 			 <property name="javax.persistence.jdbc.url" value="jdbc:mysql://mysql4.cs.stonybrook.edu:3306/tothemoon"/>
 			 <property name="javax.persistence.jdbc.user" value="tothemoon"/>

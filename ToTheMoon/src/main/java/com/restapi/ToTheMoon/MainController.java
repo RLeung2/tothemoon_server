@@ -71,7 +71,6 @@ public class MainController {
 				Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_GEOMETRY_FILE_NAME);
 		this.currState = currState;
 		session.setAttribute("currState", this.currState);
-		
 		try {
 			String stateJSON = mapper.writeValueAsString(currState);
 	        return Response.ok(stateJSON).build();
@@ -107,13 +106,28 @@ public class MainController {
 	
 	@GET
     @Path("/databasetest")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response handleDatabaseTest() {
-		String databaseOk = "Database Ran Successfully!";
-		em.instantiateStatesandJobs();
+		ObjectMapper mapper = new ObjectMapper();
+//		JobSummary jobSummary = em.getInitialJobSummary(USState.WA, 2);
+		List<String> jobPaths = em.getJobNumberJobPaths(USState.WA, 1);
+//		List<String> entitiesToStringList = em.instantiateStatesandJobs();
+//		List<JobSummary> summaries = em.getJobSummaries(USState.SC);
+//		for (JobSummary summary : summaries) {
+//			System.out.println(summary.getCoolingPeriod());
+//			System.out.println(summary.getJobId());
+//			System.out.println(summary.getNumDistrictings());
+//			System.out.println(summary.getPopulationEquality());
+//			System.out.println(summary.getRecom());
+//			System.out.println(summary.getRounds());
+//		}
+		
+		System.out.println(em.getEnactedGeometry(USState.WA));
+		System.out.println(em.getPrecinctGeometry(USState.WA));
 		
 		try {
-	        return Response.ok(databaseOk).build();
+			String entitiesToStringJSON = mapper.writeValueAsString(jobPaths);
+	        return Response.ok(entitiesToStringJSON).build();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Response.serverError().build();
