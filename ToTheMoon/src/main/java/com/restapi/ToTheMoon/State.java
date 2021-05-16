@@ -134,6 +134,15 @@ public class State {
     		Double totalCVAP = (Double) propertiesObject.get("CVAP");
     		Double totalPopulation = (Double) propertiesObject.get("TOTPOP");
     		
+    		if (hCVAP == null) {
+	    	    hCVAP = 0.0;
+	        	wCVAP = 0.0;
+	        	bCVAP = 0.0;
+	        	asianCVAP = 0.0;
+	        	totalCVAP = 0.0;
+	        	totalPopulation = 0.0;
+    		}
+    		
     		hCVAPList.set(districtNumber, hCVAPList.get(districtNumber) + hCVAP.intValue());
     		bCVAPList.set(districtNumber, bCVAPList.get(districtNumber) + bCVAP.intValue());
     		asianCVAPList.set(districtNumber, asianCVAPList.get(districtNumber) + asianCVAP.intValue());
