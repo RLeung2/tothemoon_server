@@ -57,8 +57,13 @@ public class ConstrainerThread extends Thread {
 	        reader.beginArray();
 	        while (reader.hasNext()) {
 	        	JsonObject plan = new Gson().fromJson(reader, JsonObject.class);
+
 	        	Districting validPlan = this.job.constrain(this.popEq, this.popEqScoreType, this.popType, this.compactness, 
 	        			this.mmThreshhold, this.numMM, this.minorityPopPercentageType, this.incumbents, plan, this.counter);
+	        	//Districting validPlan = this.job.constrain(0.15, "totalPopulationScore", "VAP", 0.02, 0.20, 2, "HPERCENTAGE", Arrays.asList(1), plan, counter);
+	        	//Districting validPlan = this.job.constrain(0.15, "totalPopulationScore", "VAP", 0.02, 0.20, 1, "BPERCENTAGE", Arrays.asList(4,6,7), plan, counter);
+	        	//Districting validPlan = this.job.constrain(this.popEq, this.popEqScoreType, this.popType, this.compactness, 
+	        			//this.mmThreshhold, this.numMM, this.minorityPopPercentageType, this.incumbents, plan, this.counter);
 	        	if (validPlan != null) {
 	        		this.districtings.add(validPlan);
 	        	}

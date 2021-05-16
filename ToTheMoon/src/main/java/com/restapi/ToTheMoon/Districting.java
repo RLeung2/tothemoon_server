@@ -151,6 +151,8 @@ public class Districting {
 			objectiveValues.put(Measures.DEVIATION_FROM_AVG, devAvgValueDistrict);
 			objectiveValues.put(Measures.DEVIATION_FROM_ENACTED_POPULATION, devEnactedPopValueDistrict);
 			objectiveValues.put(Measures.DEVIATION_FROM_ENACTED_AREA, devEnactedAreaValueDistrict);
+			
+			currDistrict.getObjectiveFunction().setObjScore(popEqValueDistrict + compactnessValueDistrict + devAvgValueDistrict + devEnactedPopValueDistrict + devEnactedAreaValueDistrict);
 		}
 		float popEqValueDistrict = popEqWeight * this.objectiveFunction.getPopEqScore();
 		float compactnessValueDistrict = compactnessWeight * this.objectiveFunction.getCompactnessScore();

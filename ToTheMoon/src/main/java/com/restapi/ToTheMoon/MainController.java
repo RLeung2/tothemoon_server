@@ -76,8 +76,8 @@ public class MainController {
 		USState stateEnum = UserInputToEnumTransformer.transformUserStateToEnum(state);
 		State currState = em.getState(stateEnum);
 
-		currState.generateEnactedDistricting(Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_ENACTED_FILE_NAME, 
-				Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_GEOMETRY_FILE_NAME);
+		currState.generateEnactedDistricting(Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_ENACTED_FILE_NAME, 
+				Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME);
 		this.currState = currState;
 		session.setAttribute("currState", this.currState);
 		try {
@@ -166,7 +166,7 @@ public class MainController {
 		ObjectMapper mapper = new ObjectMapper();
 		HttpSession session = req.getSession();
 		
-		String GEO_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.SC_JOB_GEOMETRY_FILE_NAME;
+		String GEO_FILE = Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME;
 		
 		MinorityPopulation minority = UserInputToEnumTransformer.transformUserMinorityPopToEnum(input);
 		State currState = (State) session.getAttribute("currState");
@@ -185,7 +185,7 @@ public class MainController {
 //				"sc_c4000_r500_p20.json", "sc_c500_r500_p10.json", "sc_c500_r500_p20.json"};
 		
 		// String[] fileNamesArr = {Constants.NEVADA_JOB_10000_FILE_NAME};
-		String[] fileNamesArr = {"sc_c1000_r500_p10.json"};
+		String[] fileNamesArr = {Constants.NEVADA_JOB_10000_FILE_NAME};
 		
 		
 		ConstraintsJSON requestBody = mapper.readValue(body, ConstraintsJSON.class);
@@ -250,7 +250,7 @@ public class MainController {
 		job.applyMeasures(requestBody.popEqWeight, requestBody.compactnessWeight, requestBody.devFromAvgWeight, requestBody.devFromEnactedPopWeight, requestBody.devFromEnactedAreaWeight);
 		job.generateDistrictingAnalysisSummary();
         job.renumberDistrictings();
-        job.generateBoxAndWhiskerData();
+        //job.generateBoxAndWhiskerData();
         
         DistrictingAnalysisSummary summary = job.getDistrictingAnalysisSummary();
         Districting dis = job.getDistrictingAtIndex(0);
@@ -264,12 +264,12 @@ public class MainController {
 	}
 	
 	@GET
-    @Path("/districting/{districtingIndex}/boxAndWhisker")
+    @Path("/districting/{districtingId}/boxAndWhisker")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response handleGetBoxAndWhisker(@PathParam("districtingIndex") String input, @Context HttpServletRequest req) {
+    public Response handleGetBoxAndWhisker(@PathParam("districtingId") String id, @Context HttpServletRequest req) {
 		HttpSession session = req.getSession();
 		Job job = (Job) session.getAttribute("currJob");
-		BoxAndWhisker boxAndWhisker = job.getBoxAndWhisker();
+		BoxAndWhisker boxAndWhisker = job.getBoxAndWhiskerForDistrictingId(Integer.parseInt(id));
 		ObjectMapper mapper = new ObjectMapper();
 		
 		try {
@@ -349,23 +349,26 @@ public class MainController {
 		
 		State stateObject = new State();
 		stateObject.setCurrState(USState.NV);
-		stateObject.generateEnactedDistricting(NEVADA_ENACTED_FILE, NEVADA_GEO_FILE);
+		stateObject.generateEnactedDistricting(Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_ENACTED_FILE_NAME, 
+				Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME);
 		
 		Districting enactedDistricting = stateObject.getEnactedDistricting();
         Job testJob = new Job();
         testJob.setCurrMinorityPopulation(MinorityPopulation.HISPANIC);
         testJob.setEnactedDistricting(enactedDistricting);
-        testJob.generatePrecinctPopulationMap(NEVADA_GEO_FILE);
+        testJob.generatePrecinctPopulationMap(Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME);
         testJob.fillDistrictings();
+        testJob.generateBoxAndWhiskerData();
         testJob.findAverageDistricting();
+        testJob.applyMeasures(1, 1, 1, 1, 1);
         testJob.generateDistrictingAnalysisSummary();
         DistrictingAnalysisSummary testSummary = testJob.getDistrictingAnalysisSummary();
         testJob.renumberDistrictings();
-        testJob.generateBoxAndWhiskerData();
+        List<Float> percentages = testJob.getMinorityPercentagesListAtDistrictIndex(0);
 		
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			String testJSON = mapper.writeValueAsString(testSummary);
+			String testJSON = mapper.writeValueAsString(percentages);
 	        return Response.ok(testJSON).build();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -381,6 +384,26 @@ public class MainController {
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			String districtingJSON = mapper.writeValueAsString(new ObjectiveFunction());
+	        return Response.ok(districtingJSON).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+	}
+	
+	@GET
+    @Path("/randomTest")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response handleRandomTest( @Context HttpServletRequest req) {
+
+		HttpSession session = req.getSession();
+		Job job = (Job) session.getAttribute("currJob");
+		List<Float> percentages = job.getMinorityPercentagesListAtDistrictIndex(0);
+		Collections.sort(percentages);
+		
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			String districtingJSON = mapper.writeValueAsString(percentages);
 	        return Response.ok(districtingJSON).build();
 		} catch (Exception e) {
 			e.printStackTrace();

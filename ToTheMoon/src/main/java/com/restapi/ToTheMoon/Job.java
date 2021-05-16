@@ -98,6 +98,7 @@ public class Job {
 	    	districting.sortDistrictsByMinority(this.currMinorityPopulation);
 	    }
 	    
+	    this.enactedDistricting.sortDistrictsByMinority(currMinorityPopulation);
 	    List<District> enactedDistrictsList = this.enactedDistricting.getDistricts();
 	    int numDistricts = enactedDistrictsList.size();
 	    for (int i = 0; i < numDistricts; i++) {
@@ -105,7 +106,7 @@ public class Job {
 	    	Collections.sort(minorityPercentagesList);
 	    	
 	    	Map<Integer, Float> minPopulationMap = boxAndWhisker.getMinPopDistrict();
-	    	minPopulationMap.put(i, minorityPercentagesList.get(0));
+	    	minPopulationMap.put(i, percentile(minorityPercentagesList, 0));
 	    	boxAndWhisker.setMinPopDistrict(minPopulationMap);
 	    	
 	    	Map<Integer, Float> maxPopulationMap = boxAndWhisker.getMaxPopDistrict();
@@ -134,7 +135,7 @@ public class Job {
 		this.setBoxAndWhisker(boxAndWhisker);
 	}
 	
-	private List<Float> getMinorityPercentagesListAtDistrictIndex(int index) {
+	public List<Float> getMinorityPercentagesListAtDistrictIndex(int index) {
 		List<Float> minorityPercentagesList = new ArrayList<Float>();
 		
 		for (Districting districting : this.districtings) {
@@ -149,6 +150,8 @@ public class Job {
 	
 	private static float percentile(List<Float> elements, double percentile) {
 	    Collections.sort(elements);
+	    if (percentile == 0)
+	    	return elements.get(0);
 	    int index = (int) Math.ceil(percentile / 100.0 * elements.size());
 	    return elements.get(index-1);
 	}
@@ -294,17 +297,21 @@ public class Job {
     		JsonObject districtObject = districtsArray.get(j).getAsJsonObject();
 
     		//Long districtNumber = (Long) districtObject.get("districtNumber");
+    		HashMap<MinorityPopulation, Integer> minorityPopulationsMap = new HashMap<MinorityPopulation, Integer>();
     		HashMap<MinorityPopulation, Float> minorityPercentagesMap = new HashMap<MinorityPopulation, Float>();
     		if (populationType.equals("VAP")) {
 	    		Double hCVAP = districtObject.get("H" + populationType).getAsDouble();
 	    		Double wCVAP = districtObject.get("W" + populationType).getAsDouble();
 	    		Double bCVAP = districtObject.get("B" + populationType).getAsDouble();
 	    		Double asianCVAP = districtObject.get("ASIAN" + populationType).getAsDouble();
-	    		Double totalVAP = districtObject.get("VAP").getAsDouble();
 	    		
 	    		float hVAPPercentage = districtObject.get("HTPERCENTAGE").getAsFloat();
 	    		float bVAPPercentage = districtObject.get("BTPERCENTAGE").getAsFloat();
 	    		float asianVAPPercentage = districtObject.get("ATPERCENTAGE").getAsFloat();
+	    		
+	    		minorityPopulationsMap.put(MinorityPopulation.HISPANIC, hCVAP.intValue());
+	    		minorityPopulationsMap.put(MinorityPopulation.AFRICAN_AMERICAN, bCVAP.intValue());
+	    		minorityPopulationsMap.put(MinorityPopulation.ASIAN, asianCVAP.intValue());
 	    		
 	    		minorityPercentagesMap.put(MinorityPopulation.HISPANIC, hVAPPercentage);
 	    		minorityPercentagesMap.put(MinorityPopulation.AFRICAN_AMERICAN, bVAPPercentage);
@@ -315,16 +322,21 @@ public class Job {
 	    		Double wTotal = districtObject.get("WHITE").getAsDouble();
 	    		Double bTotal = districtObject.get("BLACK").getAsDouble();
 	    		Double asianTotal = districtObject.get("ASIAN").getAsDouble();
-	    		Double totalPopulation = districtObject.get("population").getAsDouble();
 	    		
 	    		float hVAPPercentage = districtObject.get("HPERCENTAGE").getAsFloat();
 	    		float bVAPPercentage = districtObject.get("BPERCENTAGE").getAsFloat();
 	    		float asianVAPPercentage = districtObject.get("APERCENTAGE").getAsFloat();
 	    		
+	    		minorityPopulationsMap.put(MinorityPopulation.HISPANIC, hTotal.intValue());
+	    		minorityPopulationsMap.put(MinorityPopulation.AFRICAN_AMERICAN, bTotal.intValue());
+	    		minorityPopulationsMap.put(MinorityPopulation.ASIAN, asianTotal.intValue());
+	    		
 	    		minorityPercentagesMap.put(MinorityPopulation.HISPANIC, hVAPPercentage);
 	    		minorityPercentagesMap.put(MinorityPopulation.AFRICAN_AMERICAN, bVAPPercentage);
 	    		minorityPercentagesMap.put(MinorityPopulation.ASIAN, asianVAPPercentage);
     		}
+    		Double totalVAP = districtObject.get("VAP").getAsDouble();
+    		Double totalPopulation = districtObject.get("population").getAsDouble();
     		
     		JsonArray precinctsArray = districtObject.get("precincts").getAsJsonArray();
     		ArrayList<Precinct> precinctList = new ArrayList<Precinct>();
@@ -339,11 +351,13 @@ public class Job {
     		}
     		
     		District district = new District();
+    		district.setMinorityPopulations(minorityPopulationsMap);
     		district.setMinorityPopulationPercentages(minorityPercentagesMap);
     		district.setPrecincts(precinctList);
     		district.setObjectiveFunction(new ObjectiveFunction());
     		district.getObjectiveFunction().setCompactnessScore(districtObject.get("gr_compact").getAsFloat());
-    		district.setPopulation(districtObject.get("population").getAsInt());
+    		district.setPopulation(totalPopulation.intValue());
+    		district.setVotingPopulation(totalVAP.intValue());
     		districtList.add(district);
     	}
     	newDistricting.setDistricts(districtList);
@@ -621,5 +635,19 @@ public class Job {
 		float currentDistrictPopulationPercentage = currentMinorityPopulationPercentagesMap.get(this.currMinorityPopulation);
 		float currentMinorityPercentageDifference = Math.abs(districtAveragePopulationPercentage - currentDistrictPopulationPercentage);
 		return currentMinorityPercentageDifference;
+	}
+	
+	public BoxAndWhisker getBoxAndWhiskerForDistrictingId(int id) {
+		BoxAndWhisker boxAndWhisker = this.getBoxAndWhisker();
+	    List<District> selectedDistrictsList = this.getDistrictingById(id).getDistricts();
+	    int numDistricts = selectedDistrictsList.size();
+	    for (int i = 0; i < numDistricts; i++) {
+	    	Map<Integer, Float> selectedPercentagesMap = boxAndWhisker.getSelectedDistrictingDots();
+	    	District selectedDistrict = selectedDistrictsList.get(i);
+	    	float selectedPercentage = selectedDistrict.getMinorityPopulationPercentageForMinority(this.currMinorityPopulation);
+	    	selectedPercentagesMap.put(i, selectedPercentage);
+	    	boxAndWhisker.setSelectedDistrictingDots(selectedPercentagesMap);
+	    }
+		return boxAndWhisker;
 	}
 }
