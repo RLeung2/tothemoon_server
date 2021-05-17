@@ -264,4 +264,12 @@ public class TempEntityManager {
 		String jobFileName = jobFileList[0].getName(); 
         return state.name() + "\\precinctGeometry" + "\\" + jobFileName;
 	}
+	
+	public String getJTSGeometry(USState state) {
+		String jobFilePath = Constants.YOUR_DIRECTORY_PREFIX + "\\" + state.name() + "\\jtsGeometry";
+		File jobDirectoryPath = new File(jobFilePath);
+		File jobFileList[] = jobDirectoryPath.listFiles();
+		String jobFileName = jobFileList[0].getName(); 
+        return state.name() + "\\jtsGeometry" + "\\" + jobFileName;
+	}
 }

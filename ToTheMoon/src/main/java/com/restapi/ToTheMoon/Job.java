@@ -278,6 +278,9 @@ public class Job {
 	    	
 	    	int precinctId = ((Long)propertiesObject.get("id")).intValue();
     		Double totalPopulation = (Double) propertiesObject.get("TOTPOP");
+    		if (totalPopulation == null) {
+    			totalPopulation = 0.0;
+    		}
     		precinctPopulationMap.put(precinctId, totalPopulation.intValue());
     		
     		double area = (Double) propertiesObject.get("area");
@@ -427,11 +430,10 @@ public class Job {
 	    this.setDistrictings(districtingList);
 	}
 	
-	public String generateDistrictingGeometry(int index) throws JsonParseException, JsonMappingException, IOException {
-		List<Districting> districtings = (ArrayList<Districting>) this.districtings;
-		Districting selectedDistricting = (Districting) (districtings).get(index);
-		String geometryFileName = "C:\\Users\\Ahmed\\git\\tothemoon\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_simple.json";
-		
+	public String generateDistrictingGeometry(int index, String geoFileName) throws JsonParseException, JsonMappingException, IOException {
+		List<Districting> districtings = this.districtings;
+		Districting selectedDistricting = districtings.get(index);
+		String geometryFileName = geoFileName;
 		return selectedDistricting.generateDistrictingGeoJSON(geometryFileName, selectedDistricting);
 	}
 	

@@ -178,7 +178,13 @@ public class Districting {
 			float currDistrictArea = this.districts.get(i).calculateArea();
 			
 			float areaDeviation = this.calculatePercentDeviation(enactedCurrDistrictArea, currDistrictArea);
-
+			
+			if (areaDeviation > 1) {
+				String areaDevStr = String.valueOf(areaDeviation);
+				String[] twoParts = areaDevStr.split("\\.");
+				areaDeviation = Float.parseFloat("0." + twoParts[0] + twoParts[1]);
+			}
+			
 			currScore += areaDeviation;
 			
 			this.districts.get(i).getObjectiveFunction().setEnactedAreaScore(areaDeviation);
@@ -386,11 +392,11 @@ public class Districting {
 	}
 
 	public Geometry generateDistrictGeodata(District district, List<Geometry> precinctGeometry) {
-		List<Long> precinctsInDistrict = district.getPrecinctIDs();
+		Collection<Precinct> precinctsInDistrict = district.getPrecincts();
 		List<Geometry> precinctPolygons = new ArrayList<Geometry>();
 		
-		for (int i = 0; i < precinctsInDistrict.size(); i++) {
-			int precinctIndex = Integer.parseInt(precinctsInDistrict.get(i).toString()) - 1;
+		for(Precinct p : precinctsInDistrict) {
+			int precinctIndex = p.getId();
 			precinctPolygons.add(precinctGeometry.get(precinctIndex));
 		}
 

@@ -192,9 +192,6 @@ public class MainController {
 //				"sc_c2000_r500_p20.json", "sc_c3000_r500_p10.json", "sc_c3000_r500_p20.json", 
 //				"sc_c4000_r500_p20.json", "sc_c500_r500_p10.json", "sc_c500_r500_p20.json"};
 		
-		// String[] fileNamesArr = {Constants.NEVADA_JOB_10000_FILE_NAME};
-		//String[] fileNamesArr = {"sc_c1000_r500_p10.json"};
-		
 		List<String> fileNamesArr = em.getJobNumberJobPaths(currState.getCurrState(), Integer.parseInt(jobID));
 		
 		
@@ -298,10 +295,12 @@ public class MainController {
     @Produces(MediaType.APPLICATION_JSON)
     public Response handleDisplayDistricting(@PathParam("districtingIndex") String index, @Context HttpServletRequest req) {
         HttpSession session = req.getSession();
+        State currState = (State) session.getAttribute("currState");
 		Job job = (Job) session.getAttribute("currJob");
+		String geoFileName = Constants.YOUR_DIRECTORY_PREFIX + em.getJTSGeometry(currState.getCurrState());
 		
 		try {
-			String responseJSON = job.generateDistrictingGeometry(Integer.parseInt(index));
+			String responseJSON = job.generateDistrictingGeometry(Integer.parseInt(index), geoFileName);
 	        return Response.ok(responseJSON).build();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -388,38 +387,4 @@ public class MainController {
 		}
 	}
 	
-	@GET
-    @Path("/updateTest")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response handleUpdate( @Context HttpServletRequest req) {
-
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			String districtingJSON = mapper.writeValueAsString(new ObjectiveFunction());
-	        return Response.ok(districtingJSON).build();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return Response.serverError().build();
-		}
-	}
-	
-	@GET
-    @Path("/randomTest")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response handleRandomTest( @Context HttpServletRequest req) {
-
-		HttpSession session = req.getSession();
-		Job job = (Job) session.getAttribute("currJob");
-		List<Float> percentages = job.getMinorityPercentagesListAtDistrictIndex(0);
-		Collections.sort(percentages);
-		
-		ObjectMapper mapper = new ObjectMapper();
-		try {
-			String districtingJSON = mapper.writeValueAsString(percentages);
-	        return Response.ok(districtingJSON).build();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return Response.serverError().build();
-		}
-	}
 }
