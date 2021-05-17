@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javafx.util.Pair;
+
 import org.jgrapht.*;
 import org.jgrapht.generate.*;
 import org.jgrapht.graph.*;
@@ -368,7 +369,8 @@ public class Districting {
 		List<Geometry> districtingsGeodata = constructDistricting(selectedDistricting, precinctGeometry);
 		
 		for (int i = 0; i < districtingsGeodata.size(); i++) {
-			GeoJSON json = writer.write(districtingsGeodata.get(i));
+			Geometry currGeometry = districtingsGeodata.get(i);
+			GeoJSON json = writer.write(currGeometry);
 			// This path to Geometry is used since the JTS library uses a class of the same name
 			features.add(new Feature((org.wololo.geojson.Geometry) json, properties));
 		}

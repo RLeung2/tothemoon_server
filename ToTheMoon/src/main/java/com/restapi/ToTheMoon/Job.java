@@ -441,7 +441,7 @@ public class Job {
 	    this.setDistrictings(districtingList);
 	}
 	
-	public String generateDistrictingGeometry(int index, String geoFileName) throws JsonParseException, JsonMappingException, IOException {
+	public String generateDistrictingGeometry(int index, String geoFileName) throws JsonParseException, JsonMappingException, IOException{
 		List<Districting> districtings = this.districtings;
 		Districting selectedDistricting = districtings.get(index);
 		String geometryFileName = geoFileName;
