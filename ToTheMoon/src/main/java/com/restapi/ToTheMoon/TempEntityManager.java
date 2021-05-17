@@ -221,6 +221,9 @@ public class TempEntityManager {
 		int currJobRounds = Integer.parseInt(currJobStringParameters[2].substring(1, currJobStringParameters[2].length()));
 		int currJobCoolingPeriod = Integer.parseInt(currJobStringParameters[1].substring(1, currJobStringParameters[1].length()));
 		int currJobNumDistrictings = (jobNumber == 1) ? 100000 : 10000;
+		if (state.equals(USState.NV) && jobNumber == 2) {
+			currJobNumDistrictings = 30000;
+		}
 		JobSummary newJobSummary = new JobSummary(state, currJobNumDistrictings, currJobPopulationEquality, currJobRounds, currJobCoolingPeriod, jobNumber);
 //        for(File file : jobFileList) {
 //        	String jobFileName = file.getName();

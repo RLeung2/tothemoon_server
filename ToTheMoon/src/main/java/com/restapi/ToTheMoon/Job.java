@@ -56,7 +56,7 @@ public class Job {
 		}
 		
 		// Population Equality -- adjust for different population types
-		if (plan.get(popScoreType).getAsDouble() < popEq) {
+		if (plan.get(popScoreType).getAsDouble() > popEq) {
 			return null;
 		}
 		
