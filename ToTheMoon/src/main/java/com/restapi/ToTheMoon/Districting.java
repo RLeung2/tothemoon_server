@@ -152,6 +152,13 @@ public class Districting {
 			objectiveValues.put(Measures.DEVIATION_FROM_ENACTED_POPULATION, devEnactedPopValueDistrict);
 			objectiveValues.put(Measures.DEVIATION_FROM_ENACTED_AREA, devEnactedAreaValueDistrict);
 			
+			Map<Measures, Float> objectiveWeights = currDistrict.getObjectiveFunction().getObjectiveWeights();
+			objectiveWeights.put(Measures.POPULATION_EQUALITY, popEqWeight);
+			objectiveWeights.put(Measures.GRAPH_COMPACTNESS, compactnessWeight);
+			objectiveWeights.put(Measures.DEVIATION_FROM_AVG, devFromAvgWeight);
+			objectiveWeights.put(Measures.DEVIATION_FROM_ENACTED_POPULATION, devFromEnactedPopWeight);
+			objectiveWeights.put(Measures.DEVIATION_FROM_ENACTED_AREA, devFromEnactedAreaWeight);
+			
 			currDistrict.getObjectiveFunction().setObjScore(popEqValueDistrict + compactnessValueDistrict + devAvgValueDistrict + devEnactedPopValueDistrict + devEnactedAreaValueDistrict);
 		}
 		float popEqValueDistrict = popEqWeight * this.objectiveFunction.getPopEqScore();
@@ -164,8 +171,15 @@ public class Districting {
 		districtingObjectiveValues.put(Measures.POPULATION_EQUALITY, popEqValueDistrict);
 		districtingObjectiveValues.put(Measures.GRAPH_COMPACTNESS, compactnessValueDistrict);
 		districtingObjectiveValues.put(Measures.DEVIATION_FROM_AVG, devAvgValueDistrict);
-		districtingObjectiveValues.put(Measures.DEVIATION_FROM_ENACTED_POPULATION, this.deviationFromEnacted);
+		districtingObjectiveValues.put(Measures.DEVIATION_FROM_ENACTED_POPULATION, devEnactedPopValueDistrict);
 		districtingObjectiveValues.put(Measures.DEVIATION_FROM_ENACTED_AREA, devEnactedAreaValueDistrict);
+		
+		Map<Measures, Float> districtingObjectiveWeights = this.objectiveFunction.getObjectiveWeights();
+		districtingObjectiveWeights.put(Measures.POPULATION_EQUALITY, popEqWeight);
+		districtingObjectiveWeights.put(Measures.GRAPH_COMPACTNESS, compactnessWeight);
+		districtingObjectiveWeights.put(Measures.DEVIATION_FROM_AVG, devFromAvgWeight);
+		districtingObjectiveWeights.put(Measures.DEVIATION_FROM_ENACTED_POPULATION, devFromEnactedPopWeight);
+		districtingObjectiveWeights.put(Measures.DEVIATION_FROM_ENACTED_AREA, devFromEnactedAreaWeight);
 		
 		this.objectiveFunction.setObjScore(popEqValueDistrict + compactnessValueDistrict + devAvgValueDistrict + devEnactedPopValueDistrict + devEnactedAreaValueDistrict);
 	}
@@ -436,5 +450,20 @@ public class Districting {
 		objectiveFunction.setObjScore((float) Math.random());
 		
 		this.setObjectivefunction(objectiveFunction);
+	}
+	
+	public List<Map<String, Float>> getDistrictDataSortedByMinorityPercentage(MinorityPopulation minority, Districting enacted) {
+		List<Map<String, Float>> data = new ArrayList<Map<String, Float>>();
+		this.sortDistrictsByMinority(minority);
+		for (District district: this.districts) {
+			Map<String, Float> districtData = new HashMap<String, Float>();
+			districtData.put("districtLabel", (float) district.getLabel());
+			districtData.put("totalPopulation", (float) district.getPopulation());
+			districtData.put("minorityPopulation", (float) district.getMinorityPopulations().get(minority));
+			districtData.put("minorityPercentage", district.getMinorityPopulationPercentageForMinority(minority));
+			data.add(districtData);
+		}
+		this.gillConstructRenumbering(enacted);
+		return data;
 	}
 }

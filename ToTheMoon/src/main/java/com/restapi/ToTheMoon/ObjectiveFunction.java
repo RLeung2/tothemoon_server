@@ -15,9 +15,11 @@ public class ObjectiveFunction {
 	private float compactnessScore;
 	private float devFromAverageScore;
 	private Map<Measures, Float> objectiveValues;
+	private Map<Measures, Float> objectiveWeights;
 	
 	public ObjectiveFunction() {
 		this.objectiveValues = new HashMap<>();
+		this.objectiveWeights = new HashMap<>();
 	}
 	
 	public ObjectiveFunction(float objScore, float enactedAreaScore, float enactedPopScore, float majMinScore,
@@ -85,6 +87,14 @@ public class ObjectiveFunction {
 
 	public void setObjectiveValues(Map<Measures, Float> objectiveValues) {
 		this.objectiveValues = objectiveValues;
+	}
+	
+	public Map<Measures, Float> getObjectiveWeights() {
+		return objectiveWeights;
+	}
+
+	public void setObjectiveWeights(Map<Measures, Float> objectiveWeights) {
+		this.objectiveWeights = objectiveWeights;
 	}
 
 	public float getPopEqScore() {

@@ -25,6 +25,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import javafx.util.Pair;
+
 public class Job {
 	
 	private List<Districting> districtings;
@@ -162,6 +164,7 @@ public class Job {
 		List<Districting> topTenByObjectiveScore = this.districtingAnalysisSummary.getTopTenObjectiveScores();
 		List<Districting> highScoringPlansCloseToEnacted = this.districtingAnalysisSummary.getPlansCloseToEnacted();
 		List<Districting> highScoringMajorityMinorityPlans = this.districtingAnalysisSummary.getHighScoringMajMinDistricts();
+		List<Districting> fiveVeryDifferentPlans = this.districtingAnalysisSummary.getTopFiveAreaPairDeviations();
 		
 		for (Districting districting : topTenByObjectiveScore) {
 	    	districting.gillConstructRenumbering(this.enactedDistricting);
@@ -170,6 +173,9 @@ public class Job {
 	    	districting.gillConstructRenumbering(this.enactedDistricting);
 	    }
 		for (Districting districting : highScoringMajorityMinorityPlans) {
+	    	districting.gillConstructRenumbering(this.enactedDistricting);
+	    }
+		for (Districting districting : fiveVeryDifferentPlans) {
 	    	districting.gillConstructRenumbering(this.enactedDistricting);
 	    }
 	}
@@ -371,7 +377,7 @@ public class Job {
 	
 	public void fillDistrictings() throws FileNotFoundException, IOException, ParseException {
 		ArrayList<Districting> districtingList = new ArrayList<Districting>();
-		String jobName = Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_JOB_1000_FILE_NAME;
+		String jobName = Constants.YOUR_DIRECTORY_PREFIX + "\\NV\\jobs\\job1\\" + Constants.NEVADA_JOB_10000_FILE_NAME;
 //		Object obj = new JSONParser().parse(new FileReader("D:\\Users\\Documents\\GitHub\\tothemoon_server\\ToTheMoon\\src\\main\\java\\DistrictingData\\nv_d1000_c1000_r25_p10.json"));
 		Object obj = new JSONParser().parse(new FileReader(jobName));
 		JSONObject jsonObject = (JSONObject) obj;
@@ -389,10 +395,10 @@ public class Job {
 	    		List<Long> precinctIDs = (List<Long>) districtObject.get("precincts");
 
 	    		//Long districtNumber = (Long) districtObject.get("districtNumber");
-	    		Double hCVAP = (Double) districtObject.get("HCVAP");
-	    		Double wCVAP = (Double) districtObject.get("WCVAP");
-	    		Double bCVAP = (Double) districtObject.get("BCVAP");
-	    		Double asianCVAP = (Double) districtObject.get("ASIANCVAP");
+	    		Double hCVAP = (Double) districtObject.get("HVAP");
+	    		Double wCVAP = (Double) districtObject.get("WVAP");
+	    		Double bCVAP = (Double) districtObject.get("BVAP");
+	    		Double asianCVAP = (Double) districtObject.get("ASIANVAP");
 	    		
 	    		Double totalVAP = hCVAP + wCVAP + bCVAP + asianCVAP;
 	    		float hVAPPercentage = hCVAP.floatValue() / totalVAP.floatValue();
@@ -420,11 +426,16 @@ public class Job {
 	    		district.setMinorityPopulationPercentages(minorityPercentagesMap);
 	    		district.setPrecinctIDs(precinctIDs);
 	    		district.setPrecincts(precinctList);
+	    		district.setObjectiveFunction(new ObjectiveFunction());
+	    		district.getObjectiveFunction().setCompactnessScore( ((Double) districtObject.get("gr_compact")).floatValue() );
 	    		districtList.add(district);
 	    	}
 	    	newDistricting.setDistricts(districtList);
 	    	newDistricting.setId(i);
 	    	newDistricting.generateObjectiveFunction();
+	    	newDistricting.setObjectivefunction(new ObjectiveFunction());
+	    	newDistricting.getObjectivefunction().setCompactnessScore( ((Double) planObject.get("gr_compact")).floatValue() );
+	    	newDistricting.setMajorityMinorityDistricts(2);
 	    	districtingList.add(newDistricting);
 	    }
 	    this.setDistrictings(districtingList);
@@ -485,7 +496,8 @@ public class Job {
 	
 	public void generateDistrictingAnalysisSummary() {
 		List<Districting> topTenByObjectiveScore = generateTopTenByObjectiveScore();
-		List<Districting> highScoringPlansCloseToEnacted = generateHighScoringPlansCloseToEnacted();
+		float topScore = topTenByObjectiveScore.get(0).getObjectivefunction().getObjScore();
+		List<Districting> highScoringPlansCloseToEnacted = generateHighScoringPlansCloseToEnacted(topScore);
 		List<Districting> highScoringMajorityMinorityPlans = generatePlansCloseToAverage();
 		List<Districting> fiveVeryDifferentPlans = generateVeryDifferentPlans();
 		
@@ -528,13 +540,13 @@ public class Job {
 		};
 	}
 	
-	public List<Districting> generateHighScoringPlansCloseToEnacted() {
+	private List<Districting> generateHighScoringPlansCloseToEnacted(float topScore) {
 		PriorityQueue<Districting> pQueue = new PriorityQueue<Districting>(10, Collections.reverseOrder(getDeviationFromEnactedComparator()));
 		for (Districting districting: this.districtings) {
 			districting.calculateDevFromEnacted(this.enactedDistricting, this.currMinorityPopulation);
-			if (pQueue.size() < 10 && districting.getObjectivefunction().getObjScore() > 0.9) {
+			if (pQueue.size() < 10 && districting.getObjectivefunction().getObjScore() > (topScore * 0.8)) {
 				pQueue.add(districting);
-			} else if (districting.getObjectivefunction().getObjScore() > 0.9) {
+			} else if (districting.getObjectivefunction().getObjScore() > (topScore * 0.8)) {
 				float currentDeviation = districting.getDeviationFromEnacted();
 				float maxDeviationInHeap = pQueue.peek().getDeviationFromEnacted();
 				if (currentDeviation < maxDeviationInHeap) {
@@ -590,14 +602,31 @@ public class Job {
 		};
 	}
 	
-	public List<Districting> generateVeryDifferentPlans() {
-		List<Districting> fiveVeryDifferentPlans = new ArrayList<Districting>();
-		fiveVeryDifferentPlans.add(findClosestDistrictingToPercentile(0));
-		fiveVeryDifferentPlans.add(findClosestDistrictingToPercentile(25));
-		fiveVeryDifferentPlans.add(this.averageDistricting);
-		fiveVeryDifferentPlans.add(findClosestDistrictingToPercentile(75));
-		fiveVeryDifferentPlans.add(findClosestDistrictingToPercentile(100));
-		return fiveVeryDifferentPlans;
+	private List<Districting> generateVeryDifferentPlans() {
+		List<Districting> districtingsSortedByDeviation = new ArrayList<Districting>();
+		for (Districting districting: this.districtings) {
+			districtingsSortedByDeviation.add(districting);
+		}
+		Collections.sort(districtingsSortedByDeviation, getDeviationFromEnactedComparator());
+		
+		List<Districting> fivePlans = new ArrayList<Districting>();
+		
+		int index = (int) Math.ceil(1.0 / 100.0 * districtingsSortedByDeviation.size());
+		fivePlans.add(districtingsSortedByDeviation.get(index));
+		
+		index = (int) Math.ceil(10.0 / 100.0 * districtingsSortedByDeviation.size());
+		fivePlans.add(districtingsSortedByDeviation.get(index));
+		
+		index = (int) Math.ceil(25.0 / 100.0 * districtingsSortedByDeviation.size());
+		fivePlans.add(districtingsSortedByDeviation.get(index));
+		
+		index = (int) Math.ceil(50.0 / 100.0 * districtingsSortedByDeviation.size());
+		fivePlans.add(districtingsSortedByDeviation.get(index));
+		
+		index = (int) Math.ceil(90.0 / 100.0 * districtingsSortedByDeviation.size());
+		fivePlans.add(districtingsSortedByDeviation.get(index));
+		
+		return fivePlans;
 	}
 	
 	public Districting findClosestDistrictingToPercentile(int percentile) {
@@ -641,7 +670,9 @@ public class Job {
 	
 	public BoxAndWhisker getBoxAndWhiskerForDistrictingId(int id) {
 		BoxAndWhisker boxAndWhisker = this.getBoxAndWhisker();
-	    List<District> selectedDistrictsList = this.getDistrictingById(id).getDistricts();
+		Districting districting = this.getDistrictingById(id);
+		districting.sortDistrictsByMinority(this.currMinorityPopulation);
+	    List<District> selectedDistrictsList = districting.getDistricts();
 	    int numDistricts = selectedDistrictsList.size();
 	    for (int i = 0; i < numDistricts; i++) {
 	    	Map<Integer, Float> selectedPercentagesMap = boxAndWhisker.getSelectedDistrictingDots();

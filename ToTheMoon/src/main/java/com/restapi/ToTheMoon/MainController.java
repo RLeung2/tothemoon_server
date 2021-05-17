@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -360,14 +361,14 @@ public class MainController {
 		
 		State stateObject = new State();
 		stateObject.setCurrState(USState.NV);
-		stateObject.generateEnactedDistricting(Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_ENACTED_FILE_NAME, 
-				Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME);
+		stateObject.generateEnactedDistricting(Constants.YOUR_DIRECTORY_PREFIX + "\\NV\\enactedGeometry\\" + Constants.NEVADA_ENACTED_FILE_NAME, 
+				Constants.YOUR_DIRECTORY_PREFIX + "\\NV\\precinctGeometry\\" + Constants.NEVADA_GEOMETRY_FILE_NAME);
 		
 		Districting enactedDistricting = stateObject.getEnactedDistricting();
         Job testJob = new Job();
         testJob.setCurrMinorityPopulation(MinorityPopulation.HISPANIC);
         testJob.setEnactedDistricting(enactedDistricting);
-        testJob.generatePrecinctPopulationMap(Constants.YOUR_DIRECTORY_PREFIX + Constants.NEVADA_GEOMETRY_FILE_NAME);
+        testJob.generatePrecinctPopulationMap(Constants.YOUR_DIRECTORY_PREFIX + "\\NV\\precinctGeometry\\" + Constants.NEVADA_GEOMETRY_FILE_NAME);
         testJob.fillDistrictings();
         testJob.generateBoxAndWhiskerData();
         testJob.findAverageDistricting();
@@ -375,11 +376,11 @@ public class MainController {
         testJob.generateDistrictingAnalysisSummary();
         DistrictingAnalysisSummary testSummary = testJob.getDistrictingAnalysisSummary();
         testJob.renumberDistrictings();
-        List<Float> percentages = testJob.getMinorityPercentagesListAtDistrictIndex(0);
+        List<Float> percentages = testJob.getMinorityPercentagesListAtDistrictIndex(3);
 		
 		ObjectMapper mapper = new ObjectMapper();
 		try {
-			String testJSON = mapper.writeValueAsString(percentages);
+			String testJSON = mapper.writeValueAsString(testSummary);
 	        return Response.ok(testJSON).build();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -387,4 +388,18 @@ public class MainController {
 		}
 	}
 	
+	@GET
+    @Path("/updateTest")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response handleUpdate( @Context HttpServletRequest req) {
+
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			String districtingJSON = mapper.writeValueAsString(new ObjectiveFunction());
+	        return Response.ok(districtingJSON).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.serverError().build();
+		}
+	}
 }
